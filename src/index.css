@@ -1,7 +1,3 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
 @import '@fontsource/playfair-display/400.css';
 @import '@fontsource/playfair-display/500.css';
 @import '@fontsource/playfair-display/600.css';
@@ -10,6 +6,10 @@
 @import '@fontsource/inter/400.css';
 @import '@fontsource/inter/500.css';
 @import '@fontsource/inter/600.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 @layer base {
   :root {
@@ -95,3 +95,1072 @@
     box-shadow: 0 0 20px hsl(43 76% 50% / 0.15);
   }
 }
+
+.print-only {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  pointer-events: none;
+  z-index: -1;
+  overflow: auto;
+  background: white;
+  color: black;
+}
+
+.print-content {
+  padding: 40px;
+  max-width: 800px;
+  margin: 0 auto;
+  background: white;
+  color: black;
+  min-height: 100vh;
+}
+
+.print-header {
+  text-align: center;
+  margin-bottom: 30px;
+  border-bottom: 2px solid #000;
+  padding-bottom: 20px;
+}
+
+.print-company-name {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 5px;
+  color: black;
+}
+
+.print-company-address {
+  font-size: 12px;
+  line-height: 1.4;
+  color: black;
+}
+
+.print-invoice-details {
+  margin-top: 15px;
+  font-size: 12px;
+  color: black;
+}
+
+.print-subject {
+  margin: 20px 0;
+  font-size: 13px;
+  font-weight: bold;
+  color: black;
+}
+
+.print-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px 0;
+}
+
+.print-table th,
+.print-table td {
+  border: 1px solid #000;
+  padding: 8px;
+  text-align: left;
+  color: black;
+}
+
+.print-table th {
+  background-color: #f0f0f0;
+  font-weight: bold;
+}
+
+.print-table td.text-right {
+  text-align: right;
+}
+
+.print-account-details {
+  margin-top: 40px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: black;
+}
+
+.print-account-details strong {
+  font-weight: bold;
+}
+
+/* =========================
+   Rich PDF templates
+   ========================= */
+
+.print-rich {
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Liberation Sans", sans-serif;
+  color: #0f172a;
+}
+
+.print-rich * {
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.print-rich-page {
+  background: #ffffff;
+}
+
+.print-rich-sheet {
+  position: relative;
+  padding: 28px;
+  width: 816px; /* ~ letter @ 96dpi; html2pdf will scale */
+  box-sizing: border-box;
+}
+
+/* --- Page-fit tweaks (keeps content within PDF page) --- */
+.print-rich-sheet {
+  /* Fit better on US Letter with html2pdf/jsPDF */
+  width: 760px;
+  padding: 22px;
+}
+
+.print-rich-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 14px 14px;
+  border-radius: 14px;
+  color: #fff;
+}
+
+.print-rich-topbar .meta {
+  text-align: right;
+  font-size: 12px;
+  line-height: 1.35;
+  opacity: 0.95;
+}
+
+.print-rich-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.print-rich-logo {
+  width: 46px;
+  height: 46px;
+  object-fit: contain;
+  border-radius: 10px;
+}
+
+.print-rich-brand h1 {
+  font-size: 16px;
+  margin: 0;
+  letter-spacing: 0.2px;
+}
+
+.print-rich-brand p {
+  margin: 2px 0 0 0;
+  font-size: 11px;
+  line-height: 1.35;
+  opacity: 0.95;
+}
+
+.print-rich-section {
+  margin-top: 12px;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+}
+
+.print-rich-section .section-body {
+  padding: 12px 14px;
+}
+
+.print-rich-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #64748b;
+}
+
+.print-rich-title {
+  margin: 6px 0 0 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.print-rich-grid-2 {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 14px;
+}
+
+.print-rich-kv {
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: 105px 1fr;
+  gap: 5px 10px;
+  font-size: 11px;
+  color: #0f172a;
+}
+
+.print-rich-kv .k {
+  color: #64748b;
+}
+
+.print-rich-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+
+.print-rich-table thead th {
+  text-align: left;
+  padding: 10px 10px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #334155;
+  background: #f1f5f9;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.print-rich-table tbody td {
+  padding: 9px 10px;
+  border-bottom: 1px solid #e2e8f0;
+  vertical-align: top;
+}
+
+.print-rich-table .num {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.print-rich-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.print-rich-totals {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  align-items: start;
+  gap: 10px;
+}
+
+.print-rich-totalbox {
+  border-left: 1px solid #e2e8f0;
+  padding-left: 14px;
+}
+
+.print-rich-totalrow {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 0;
+  font-size: 11px;
+}
+
+.print-rich-totalrow .k {
+  color: #64748b;
+}
+
+.print-rich-totalrow.grand {
+  margin-top: 6px;
+  padding-top: 10px;
+  border-top: 1px dashed #cbd5e1;
+  font-weight: 800;
+  font-size: 13px;
+}
+
+.print-rich-footer {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.print-rich-note {
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  font-size: 11px;
+  line-height: 1.55;
+  color: #0f172a;
+}
+
+.print-rich-note h3 {
+  margin: 0 0 6px 0;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #334155;
+}
+
+.print-rich-sign {
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  font-size: 11px;
+  color: #0f172a;
+}
+
+.print-rich-sign .line {
+  margin-top: 34px;
+  border-top: 1px solid #cbd5e1;
+}
+
+/* =========================
+   Quotation template (matched to reference screenshot)
+   ========================= */
+
+.print-qt {
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Liberation Sans", sans-serif;
+  color: #0f172a;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.print-qt-sheet {
+  position: relative;
+  width: 760px;
+  padding: 18px;
+  box-sizing: border-box;
+  background: #ffffff;
+}
+
+/* --- PDF boundary fix (avoid right-side trimming) --- */
+.print-qt,
+.print-qt * {
+  box-sizing: border-box;
+}
+
+.print-qt-sheet {
+  width: 730px;
+  max-width: 100%;
+}
+
+.print-qt-frame {
+  grid-template-columns: 78px 1fr;
+  gap: 12px;
+}
+
+.print-qt-main {
+  padding-right: 0;
+}
+
+.print-qt-table {
+  table-layout: fixed;
+}
+
+.print-qt-table td,
+.print-qt-table th {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.print-qt-rail {
+  border-radius: 18px;
+  background: linear-gradient(180deg, #1d4ed8 0%, #0ea5e9 55%, #22c55e 150%);
+  position: relative;
+  overflow: hidden;
+}
+
+.print-qt-rail::after {
+  content: "";
+  position: absolute;
+  top: -120px;
+  left: -80px;
+  width: 240px;
+  height: 240px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.18);
+}
+
+.print-qt-main {
+  padding: 6px 6px 6px 0;
+}
+
+.print-qt-top {
+  display: grid;
+  grid-template-columns: 1fr 260px;
+  gap: 12px;
+  align-items: start;
+}
+
+.print-qt-brand {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.print-qt-logo {
+  width: 54px;
+  height: 54px;
+  object-fit: contain;
+}
+
+.print-qt-company {
+  line-height: 1.2;
+}
+
+.print-qt-company .name {
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: 0.2px;
+}
+
+.print-qt-company .addr {
+  font-size: 11px;
+  color: #334155;
+  margin-top: 3px;
+}
+
+.print-qt-badge {
+  border-radius: 14px;
+  padding: 10px 12px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  text-align: right;
+}
+
+.print-qt-badge .title {
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  color: #1d4ed8;
+}
+
+.print-qt-badge .kv {
+  margin-top: 6px;
+  display: grid;
+  grid-template-columns: 92px 1fr;
+  gap: 4px 8px;
+  font-size: 11px;
+  color: #0f172a;
+}
+
+.print-qt-badge .kv .k {
+  color: #64748b;
+}
+
+.print-qt-subjectline {
+  margin-top: 10px;
+  margin-bottom: 8px;
+  padding: 0 12px;
+  border: 1px solid rgba(29,78,216,0.22);
+  border-radius: 16px;
+  background: linear-gradient(90deg, rgba(29,78,216,0.12), rgba(14,165,233,0.08));
+  box-shadow: 0 10px 24px rgba(2, 6, 23, 0.06);
+  min-height: 48px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 12px;
+}
+
+.print-qt-subjectline .label {
+  height: 30px;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 30px;
+}
+
+.print-qt-subjectline .value {
+  height: 30px;
+  display: flex;
+  align-items: center;
+  line-height: 30px;
+}
+
+.print-qt-section {
+  margin-top: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.print-qt-section .hd {
+  padding: 10px 12px;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #334155;
+}
+
+.print-qt-section .bd {
+  padding: 10px 12px;
+  font-family: inherit;
+  font-size: 11px;
+  line-height: 1.45;
+  color: #0f172a;
+}
+
+.print-qt-kv {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 5px 10px;
+  font-size: 11px;
+}
+
+.print-qt-kv .k {
+  color: #64748b;
+}
+
+.print-qt-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+}
+
+.print-qt-table thead th {
+  padding: 9px 10px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #334155;
+  background: #eef2ff;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.print-qt-table tbody td {
+  padding: 8px 10px;
+  border-bottom: 1px solid #e2e8f0;
+  vertical-align: top;
+}
+
+.print-qt-table .num {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.print-qt-split {
+  display: grid;
+  grid-template-columns: 1fr 290px;
+  gap: 12px;
+}
+
+.print-qt-totals {
+  border-left: 1px solid #e2e8f0;
+  padding-left: 12px;
+}
+
+.print-qt-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 0;
+  font-size: 11px;
+}
+
+.print-qt-row .k {
+  color: #64748b;
+}
+
+.print-qt-row.grand {
+  border-top: 1px dashed #cbd5e1;
+  margin-top: 6px;
+  padding-top: 9px;
+  font-weight: 900;
+  font-size: 13px;
+}
+
+.print-qt-footer {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.print-qt-sign {
+  margin-top: 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 10px 12px;
+}
+
+.print-qt-sign .line {
+  margin-top: 30px;
+  border-top: 1px solid #cbd5e1;
+}
+
+/* Prevent overflow in PDF render */
+.print-qt-sheet,
+.print-qt-section {
+  overflow: hidden;
+}
+
+/* Richer overall background accents (PDF-safe, subtle) */
+.print-qt-sheet {
+  position: relative;
+  background: linear-gradient(180deg, #ffffff 0%, #ffffff 60%, #f8fafc 100%);
+}
+
+.print-qt-sheet::before {
+  content: "";
+  position: absolute;
+  top: -80px;
+  right: -120px;
+  width: 260px;
+  height: 260px;
+  border-radius: 999px;
+  background: radial-gradient(circle at 30% 30%, rgba(29,78,216,0.18), rgba(14,165,233,0.06) 60%, rgba(255,255,255,0) 70%);
+  pointer-events: none;
+}
+
+.print-qt-sheet::after {
+  content: "";
+  position: absolute;
+  bottom: -90px;
+  left: 110px;
+  width: 300px;
+  height: 300px;
+  border-radius: 999px;
+  background: radial-gradient(circle at 30% 30%, rgba(34,197,94,0.12), rgba(14,165,233,0.05) 55%, rgba(255,255,255,0) 70%);
+  pointer-events: none;
+}
+
+.print-qt-frame,
+.print-qt-main {
+  position: relative;
+  z-index: 1;
+}
+
+/* Subject strip: guaranteed horizontal alignment + rich background */
+.print-qt-subjectline {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+
+  border: 1px solid rgba(29,78,216,0.22);
+  background: linear-gradient(90deg, rgba(29,78,216,0.14), rgba(14,165,233,0.08));
+  box-shadow: 0 10px 24px rgba(2, 6, 23, 0.06);
+}
+
+.print-qt-subjectline .label {
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(29,78,216,0.14);
+  border: 1px solid rgba(29,78,216,0.18);
+  line-height: 1;
+}
+
+.print-qt-subjectline .value {
+  margin: 0;
+  padding: 0;
+  height: 28px;
+  display: grid;
+  align-items: center;
+  line-height: 1;
+}
+
+/* =========================
+   Invoice template (same structure, different theme)
+   ========================= */
+
+.print-inv {
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Noto Sans", "Liberation Sans", sans-serif;
+  color: #0f172a;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.print-inv,
+.print-inv * {
+  box-sizing: border-box;
+}
+
+.print-inv-sheet {
+  width: 730px;
+  max-width: 100%;
+  padding: 18px;
+  box-sizing: border-box;
+  position: relative;
+  background: linear-gradient(180deg, #ffffff 0%, #ffffff 60%, #faf5ff 100%);
+}
+
+.print-inv-sheet::before {
+  content: "";
+  position: absolute;
+  top: -80px;
+  right: -120px;
+  width: 260px;
+  height: 260px;
+  border-radius: 999px;
+  background: radial-gradient(circle at 30% 30%, rgba(79,70,229,0.18), rgba(219,39,119,0.08) 60%, rgba(255,255,255,0) 70%);
+  pointer-events: none;
+}
+
+.print-inv-sheet::after {
+  content: "";
+  position: absolute;
+  bottom: -90px;
+  left: 110px;
+  width: 300px;
+  height: 300px;
+  border-radius: 999px;
+  background: radial-gradient(circle at 30% 30%, rgba(219,39,119,0.10), rgba(79,70,229,0.06) 55%, rgba(255,255,255,0) 70%);
+  pointer-events: none;
+}
+
+.print-inv-frame {
+  display: grid;
+  grid-template-columns: 78px 1fr;
+  gap: 12px;
+  min-height: 980px;
+}
+
+.print-inv-rail {
+  border-radius: 18px;
+  background: linear-gradient(180deg, #4f46e5 0%, #7c3aed 55%, #db2777 150%);
+  position: relative;
+  overflow: hidden;
+}
+
+.print-inv-rail::after {
+  content: "";
+  position: absolute;
+  top: -120px;
+  left: -80px;
+  width: 240px;
+  height: 240px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.18);
+}
+
+.print-inv-main {
+  padding: 6px 6px 6px 0;
+  position: relative;
+  z-index: 1;
+}
+
+.print-inv-top {
+  display: grid;
+  grid-template-columns: 1fr 260px;
+  gap: 12px;
+  align-items: start;
+}
+
+.print-inv-brand {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.print-inv-logo {
+  width: 54px;
+  height: 54px;
+  object-fit: contain;
+}
+
+.print-inv-company {
+  line-height: 1.2;
+}
+
+.print-inv-company .name {
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: 0.2px;
+}
+
+.print-inv-company .addr {
+  font-size: 11px;
+  color: #334155;
+  margin-top: 3px;
+}
+
+.print-inv-badge {
+  border-radius: 14px;
+  padding: 10px 12px;
+  background: #f5f3ff;
+  border: 1px solid #e9d5ff;
+  text-align: right;
+}
+
+.print-inv-badge .title {
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  color: #4f46e5;
+}
+
+.print-inv-badge .kv {
+  margin-top: 6px;
+  display: grid;
+  grid-template-columns: 92px 1fr;
+  gap: 4px 8px;
+  font-size: 11px;
+  color: #0f172a;
+}
+
+.print-inv-badge .kv .k {
+  color: #64748b;
+}
+
+.print-inv-subjectline {
+  margin-top: 10px;
+  margin-bottom: 8px;
+  padding: 0 12px;
+  border: 1px solid rgba(79,70,229,0.22);
+  border-radius: 16px;
+  background: linear-gradient(90deg, rgba(79,70,229,0.12), rgba(219,39,119,0.08));
+  box-shadow: 0 10px 24px rgba(2, 6, 23, 0.06);
+  min-height: 48px;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 12px;
+}
+
+.print-inv-subjectline .label {
+  padding: 0 12px;
+  height: 30px;
+  border-radius: 999px;
+  background: rgba(79,70,229,0.12);
+  border: 1px solid rgba(79,70,229,0.16);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #4f46e5;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 30px;
+  white-space: nowrap;
+}
+
+.print-inv-subjectline .value {
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 900;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  line-height: 30px;
+}
+
+.print-inv-section {
+  margin-top: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.print-inv-section .hd {
+  padding: 10px 12px;
+  background: #faf5ff;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #334155;
+}
+
+.print-inv-section .bd {
+  padding: 10px 12px;
+  font-family: inherit;
+  font-size: 11px;
+  line-height: 1.45;
+  color: #0f172a;
+}
+
+.print-inv-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 11px;
+  table-layout: fixed;
+}
+
+.print-inv-table thead th {
+  padding: 9px 10px;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #334155;
+  background: #f5f3ff;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.print-inv-table tbody td {
+  padding: 8px 10px;
+  border-bottom: 1px solid #e2e8f0;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.print-inv-table .num {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.print-inv-split {
+  display: grid;
+  grid-template-columns: 1fr 290px;
+  gap: 12px;
+}
+
+.print-inv-totals {
+  border-left: 1px solid #e2e8f0;
+  padding-left: 12px;
+}
+
+.print-inv-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 0;
+  font-size: 11px;
+}
+
+.print-inv-row .k {
+  color: #64748b;
+}
+
+.print-inv-row.grand {
+  border-top: 1px dashed #cbd5e1;
+  margin-top: 6px;
+  padding-top: 9px;
+  font-weight: 900;
+  font-size: 13px;
+}
+
+.print-inv-footer {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.print-inv-sign {
+  margin-top: 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 10px 12px;
+}
+
+.print-inv-sign .line {
+  margin-top: 30px;
+  border-top: 1px solid #cbd5e1;
+}
+
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-only {
+    position: static !important;
+    left: auto !important;
+    display: block !important;
+  }
+
+  .print-content {
+    padding: 40px;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .print-header {
+    text-align: center;
+    margin-bottom: 30px;
+    border-bottom: 2px solid #000;
+    padding-bottom: 20px;
+  }
+
+  .print-company-name {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 5px;
+  }
+
+  .print-company-address {
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  .print-invoice-details {
+    margin-top: 15px;
+    font-size: 12px;
+  }
+
+  .print-subject {
+    margin: 20px 0;
+    font-size: 13px;
+    font-weight: bold;
+  }
+
+  .print-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+  }
+
+  .print-table th,
+  .print-table td {
+    border: 1px solid #000;
+    padding: 8px;
+    text-align: left;
+  }
+
+  .print-table th {
+    background-color: #f0f0f0;
+    font-weight: bold;
+  }
+
+  .print-table td.text-right {
+    text-align: right;
+  }
+
+  .print-totals {
+    margin-left: auto;
+    width: 300px;
+    margin-top: 10px;
+  }
+
+  .print-totals-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 5px 0;
+  }
+
+  .print-totals-row.grand-total {
+    font-weight: bold;
+    border-top: 2px solid #000;
+    padding-top: 10px;
+    margin-top: 5px;
+  }
+
+  .print-account-details {
+    margin-top: 40px;
+    font-size: 12px;
+    line-height: 1.6;
+  }
+
+  .print-account-details strong {
+    font-weight: bold;
+  }
+
+  /* Ensure gradient colors render in print/PDF */
+  .print-rich * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}
+

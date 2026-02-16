@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
 
 export default function Login() {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -12,33 +13,43 @@ export default function Login() {
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const auth = useAuth();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    if (isSignUp) {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: { full_name: fullName },
-          emailRedirectTo: window.location.origin,
-        },
-      });
-      if (error) {
-        toast({ title: "Error", description: error.message, variant: "destructive" });
-      } else {
-        toast({ title: "Account created!", description: "You can now sign in." });
-        setIsSignUp(false);
-      }
-    } else {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) {
-        toast({ title: "Error", description: error.message, variant: "destructive" });
-      }
-    }
+    // DEVELOPMENT: Accept any credentials and fake sign-in
+    auth.setMockUser({
+      id: email || "dev-user",
+      email,
+      full_name: fullName || "Dev User",
+    });
     setLoading(false);
+    navigate("/dashboard", { replace: true });
+    // BYPASS: Do not call Supabase auth methods in development
+    // if (isSignUp) {
+    //   const { error } = await supabase.auth.signUp({
+    //     email,
+    //     password,
+    //     options: {
+    //       data: { full_name: fullName },
+    //       emailRedirectTo: window.location.origin,
+    //     },
+    //   });
+    //   if (error) {
+    //     toast({ title: "Error", description: error.message, variant: "destructive" });
+    //   } else {
+    //     toast({ title: "Account created!", description: "You can now sign in." });
+    //     setIsSignUp(false);
+    //   }
+    // } else {
+    //   const { error } = await supabase.auth.signInWithPassword({ email, password });
+    //   if (error) {
+    //     toast({ title: "Error", description: error.message, variant: "destructive" });
+    //   }
+    // }
   };
 
   return (
@@ -63,7 +74,6 @@ export default function Login() {
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
                   className="mt-1 bg-secondary border-border"
-                  required
                 />
               </div>
             )}
@@ -71,11 +81,10 @@ export default function Login() {
               <Label htmlFor="email" className="text-muted-foreground">Email</Label>
               <Input
                 id="email"
-                type="email"
+                type="text"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="mt-1 bg-secondary border-border"
-                required
               />
             </div>
             <div>
@@ -86,8 +95,6 @@ export default function Login() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="mt-1 bg-secondary border-border"
-                minLength={6}
-                required
               />
             </div>
             <Button type="submit" disabled={loading} className="w-full gold-gradient text-primary-foreground font-semibold">

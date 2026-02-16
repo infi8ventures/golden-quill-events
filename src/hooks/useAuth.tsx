@@ -7,6 +7,7 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   signOut: () => Promise<void>;
+  setMockUser: (user: any) => void;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -14,12 +15,29 @@ const AuthContext = createContext<AuthContextType>({
   session: null,
   loading: true,
   signOut: async () => {},
+  setMockUser: () => {},
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Allow setting a mock user for development
+  const setMockUser = (mockUser: any) => {
+    setUser(mockUser);
+    setSession({
+      access_token: 'dev-token',
+      token_type: 'bearer',
+      user: mockUser,
+      expires_in: 3600,
+      expires_at: Math.floor(Date.now() / 1000) + 3600,
+      refresh_token: 'dev-refresh',
+      provider_token: null,
+      provider_refresh_token: null,
+    } as any);
+    setLoading(false);
+  };
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -38,11 +56,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signOut = async () => {
+    setUser(null);
+    setSession(null);
     await supabase.auth.signOut();
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading, signOut, setMockUser }}>
       {children}
     </AuthContext.Provider>
   );

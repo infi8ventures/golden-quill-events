@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Plus, Trash2, Save } from "lucide-react";
+import { Plus, Trash2, Save, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { formatCurrency } from "@/lib/supabase-helpers";
+import { formatCurrency, formatDate } from "@/lib/supabase-helpers";
+import html2pdf from "html2pdf.js";
 import { AppLayout } from "@/components/AppLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -12,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import logoImg from "@/assets/logo.jpeg";
 
 interface LineItem {
   id?: string;
@@ -42,6 +44,9 @@ export default function QuotationBuilder() {
   const [items, setItems] = useState<LineItem[]>([{ description: "", quantity: 1, unit: "nos", rate: 0, amount: 0 }]);
   const [clients, setClients] = useState<ClientOption[]>([]);
   const [events, setEvents] = useState<EventOption[]>([]);
+  const [quotationNumber, setQuotationNumber] = useState("");
+  const [createdAt, setCreatedAt] = useState("");
+  const [showPrintPreview, setShowPrintPreview] = useState(false);
 
   const subtotal = items.reduce((s, i) => s + i.amount, 0);
   const gstAmount = (subtotal - discount) * (gstPercentage / 100);
@@ -58,6 +63,8 @@ export default function QuotationBuilder() {
           setTitle(data.title); setClientId(data.client_id || ""); setEventId(data.event_id || "");
           setGstPercentage(Number(data.gst_percentage)); setDiscount(Number(data.discount));
           setNotes(data.notes || ""); setTerms(data.terms || "");
+          setQuotationNumber(data.quotation_number || "");
+          setCreatedAt(data.created_at || "");
         }
       });
       supabase.from("quotation_items").select("*").eq("quotation_id", id).order("sort_order").then(({ data }) => {
@@ -77,6 +84,51 @@ export default function QuotationBuilder() {
 
   const addItem = () => setItems([...items, { description: "", quantity: 1, unit: "nos", rate: 0, amount: 0 }]);
   const removeItem = (index: number) => setItems(items.filter((_, i) => i !== index));
+
+  const handleDownloadPDF = () => {
+    if (!quotationNumber || items.length === 0 || !title) {
+      toast({ title: "Error", description: "Please ensure quotation data is loaded", variant: "destructive" });
+      return;
+    }
+
+    // Show preview first
+    setShowPrintPreview(true);
+
+    // Generate PDF after a short delay to ensure rendering
+    setTimeout(() => {
+      const element = document.getElementById('quotation-print-content');
+      if (!element) {
+        toast({ title: "Error", description: "Could not find print content", variant: "destructive" });
+        setShowPrintPreview(false);
+        return;
+      }
+
+      const opt = {
+        margin: [0.5, 0.5, 0.5, 0.5] as [number, number, number, number],
+        filename: `Quotation_${quotationNumber}.pdf`,
+        image: { type: 'jpeg' as const, quality: 0.98 },
+        html2canvas: {
+          scale: 2,
+          logging: false,
+          backgroundColor: '#ffffff'
+        },
+        jsPDF: {
+          unit: 'in' as const,
+          format: 'letter' as const,
+          orientation: 'portrait' as const
+        }
+      };
+
+      html2pdf().set(opt).from(element).save().then(() => {
+        setShowPrintPreview(false);
+        toast({ title: "PDF downloaded successfully!" });
+      }).catch((error: any) => {
+        console.error('PDF generation error:', error);
+        setShowPrintPreview(false);
+        toast({ title: "Error generating PDF", description: error.message, variant: "destructive" });
+      });
+    }, 500);
+  };
 
   const handleSave = async () => {
     if (!user || !title) { toast({ title: "Please fill required fields", variant: "destructive" }); return; }
@@ -124,8 +176,158 @@ export default function QuotationBuilder() {
   };
 
   return (
-    <AppLayout>
-      <PageHeader title={isEdit ? "Edit Quotation" : "New Quotation"} subtitle="Build your quotation with line items" />
+    <>
+      {/* Print-only view - shown in dialog during PDF generation */}
+      {showPrintPreview && isEdit && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.8)',
+          zIndex: 9999,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          overflow: 'auto'
+        }}>
+          <div id="quotation-print-content" style={{
+            backgroundColor: 'white',
+            maxWidth: '860px',
+            margin: '16px',
+            boxShadow: '0 0 20px rgba(0,0,0,0.3)'
+          }}>
+            <div className="print-qt">
+              <div className="print-qt-sheet">
+                <div className="print-qt-frame">
+                  <div className="print-qt-rail" />
+
+                  <div className="print-qt-main">
+                    <div className="print-qt-top">
+                      <div className="print-qt-brand">
+                        <img className="print-qt-logo" src={logoImg} alt="Logo" />
+                        <div className="print-qt-company">
+                          <div className="name">K M Enterprises</div>
+                          <div className="addr">
+                            #612, Nagendra Nilaya, 8th Main 1st Stage, Vijayanagar Mysuru
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="print-qt-badge">
+                        <div className="title">QUOTATION</div>
+                        <div className="kv">
+                          <div className="k">Quotation No</div>
+                          <div style={{ fontWeight: 800 }}>{quotationNumber}</div>
+                          <div className="k">Date</div>
+                          <div>{createdAt ? formatDate(createdAt) : "—"}</div>
+                          <div className="k">GSTIN</div>
+                          <div>29AAXFK3522C1Z6</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="print-qt-section" style={{ marginTop: 10 }}>
+                      <div className="hd">Items</div>
+                      <div className="bd" style={{ padding: 0 }}>
+                        <table className="print-qt-table">
+                          <thead>
+                            <tr>
+                              <th style={{ width: 32 }}>#</th>
+                              <th>Description</th>
+                              <th className="num" style={{ width: 62 }}>Qty</th>
+                              <th style={{ width: 56 }}>Unit</th>
+                              <th className="num" style={{ width: 86 }}>Rate</th>
+                              <th className="num" style={{ width: 100 }}>Amount</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {items.map((item, i) => (
+                              <tr key={i}>
+                                <td>{i + 1}</td>
+                                <td style={{ paddingRight: 14 }}>{item.description}</td>
+                                <td className="num">{item.quantity}</td>
+                                <td>{item.unit}</td>
+                                <td className="num">{formatCurrency(item.rate)}</td>
+                                <td className="num">{formatCurrency(item.amount)}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                    <div className="print-qt-section" style={{ marginTop: 10 }}>
+                      <div className="hd">Summary</div>
+                      <div className="bd">
+                        <div className="print-qt-split">
+                          <div>
+                            <div className="print-qt-kv">
+                              <div className="k">Account Name</div>
+                              <div>K M Enterprises</div>
+                              <div className="k">Account No</div>
+                              <div>50200064343340</div>
+                              <div className="k">IFSC</div>
+                              <div>HDFC0000065</div>
+                              <div className="k">Branch</div>
+                              <div>HDFC Bank, Saraswathipuram</div>
+                            </div>
+                          </div>
+
+                          <div className="print-qt-totals">
+                            <div className="print-qt-row"><span className="k">Subtotal</span><span>{formatCurrency(subtotal)}</span></div>
+                            <div className="print-qt-row"><span className="k">Discount</span><span>{formatCurrency(discount)}</span></div>
+                            <div className="print-qt-row"><span className="k">GST ({gstPercentage}%)</span><span>{formatCurrency(gstAmount)}</span></div>
+                            <div className="print-qt-row grand"><span>Total</span><span>{formatCurrency(total)}</span></div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="print-qt-footer">
+                      <div className="print-qt-section" style={{ marginTop: 10 }}>
+                        <div className="hd">Notes</div>
+                        <div className="bd">{notes || "—"}</div>
+                      </div>
+                      <div className="print-qt-section" style={{ marginTop: 10 }}>
+                        <div className="hd">Terms</div>
+                        <div className="bd">{terms || "—"}</div>
+                      </div>
+                    </div>
+
+                    <div className="print-qt-sign">
+                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, fontSize: 11 }}>
+                        <div style={{ color: '#64748b' }}>Thank you for your business.</div>
+                        <div style={{ textAlign: 'right' }}>
+                          <div style={{ fontWeight: 800 }}>Authorized Signatory</div>
+                          <div className="line" />
+                        </div>
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Screen view */}
+      <AppLayout>
+      <div className="no-print">
+      <PageHeader
+        title={isEdit ? "Edit Quotation" : "New Quotation"}
+        subtitle="Build your quotation with line items"
+        action={
+          isEdit ? (
+            <Button onClick={handleDownloadPDF} variant="outline" className="border-border text-foreground hover:bg-secondary">
+              <Download className="h-4 w-4 mr-2" />Download PDF
+            </Button>
+          ) : undefined
+        }
+      />
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-6">
@@ -237,6 +439,8 @@ export default function QuotationBuilder() {
           </div>
         </div>
       </div>
+      </div>
     </AppLayout>
+    </>
   );
 }
