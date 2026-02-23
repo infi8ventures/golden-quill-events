@@ -40,10 +40,10 @@ export default function Dashboard() {
       ]);
 
       const invoiceData = invoices.data || [];
-      const totalRevenue = (payments.data || []).reduce((sum, p) => sum + Number(p.amount), 0);
+      const totalRevenue = (payments.data || []).reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
       const pendingPayments = invoiceData
         .filter((i) => i.status !== "paid" && i.status !== "cancelled")
-        .reduce((sum, i) => sum + (Number(i.total) - Number(i.amount_paid)), 0);
+        .reduce((sum, i) => sum + ((Number(i.total) || 0) - (Number(i.amount_paid) || 0)), 0);
 
       setStats({
         totalRevenue,

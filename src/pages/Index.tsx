@@ -1,16 +1,21 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
+// import { useAuth } from "@/hooks/useAuth";
 
 const Index = () => {
-  const { user, loading } = useAuth();
+  // Login is disabled - always redirect to dashboard
+  // const { user, loading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!loading) {
-      navigate(user ? "/dashboard" : "/login", { replace: true });
-    }
-  }, [user, loading, navigate]);
+    // Always go to dashboard (login disabled)
+    navigate("/dashboard", { replace: true });
+    
+    // Original login logic (commented out):
+    // if (!loading) {
+    //   navigate(user ? "/dashboard" : "/login", { replace: true });
+    // }
+  }, [navigate]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">

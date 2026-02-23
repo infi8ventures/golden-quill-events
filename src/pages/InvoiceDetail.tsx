@@ -49,11 +49,29 @@ export default function InvoiceDetail() {
     const { data: inv } = await supabase.from("invoices").select("*, clients(name, email, phone, company, gst_number)").eq("id", id).single();
     if (inv) {
       setInvoice(inv);
-      setPayAmount(Number(inv.balance_due));
+      setPayAmount(Number(inv.balance_due) || 0);
 
-      if (inv.quotation_id) {
+      // First try to get invoice_items directly
+      const { data: invItems } = await supabase.from("invoice_items").select("*").eq("invoice_id", id).order("sort_order");
+      
+      if (invItems && invItems.length > 0) {
+        setItems(invItems.map((i: any) => ({ 
+          description: i.description, 
+          quantity: Number(i.quantity), 
+          unit: i.unit || "nos", 
+          rate: Number(i.rate), 
+          amount: Number(i.amount) 
+        })));
+      } else if (inv.quotation_id) {
+        // Fallback to quotation_items
         const { data: qi } = await supabase.from("quotation_items").select("*").eq("quotation_id", inv.quotation_id).order("sort_order");
-        setItems((qi || []).map((i) => ({ description: i.description, quantity: Number(i.quantity), unit: i.unit || "nos", rate: Number(i.rate), amount: Number(i.amount) })));
+        setItems((qi || []).map((i: any) => ({ 
+          description: i.description, 
+          quantity: Number(i.quantity), 
+          unit: i.unit || "nos", 
+          rate: Number(i.rate), 
+          amount: Number(i.amount) 
+        })));
       }
     }
     const { data: pays } = await supabase.from("payments").select("*").eq("invoice_id", id).order("payment_date", { ascending: false });
@@ -193,7 +211,7 @@ export default function InvoiceDetail() {
                         </div>
                         <div style={{ marginTop: 8, display: 'flex', gap: 14, fontSize: 11 }}>
                           <div><span style={{ color: '#64748b' }}>Status:</span> <span style={{ fontWeight: 900 }}>{String(invoice.status || "").toUpperCase()}</span></div>
-                          <div><span style={{ color: '#64748b' }}>Paid:</span> <span style={{ fontWeight: 900 }}>{formatCurrency(Number(invoice.amount_paid))}</span></div>
+                          <div><span style={{ color: '#64748b' }}>Paid:</span> <span style={{ fontWeight: 900 }}>{formatCurrency(Number(invoice.amount_paid) || 0)}</span></div>
                           <div><span style={{ color: '#64748b' }}>Balance:</span> <span style={{ fontWeight: 900 }}>{formatCurrency(Number(invoice.balance_due))}</span></div>
                         </div>
                       </div>
@@ -376,7 +394,7 @@ export default function InvoiceDetail() {
             <div className="border-t border-border pt-3 flex justify-between font-bold text-lg font-serif">
               <span>Total</span><span className="gold-text">{formatCurrency(Number(invoice.total))}</span>
             </div>
-            <div className="flex justify-between text-success"><span>Paid</span><span>{formatCurrency(Number(invoice.amount_paid))}</span></div>
+            <div className="flex justify-between text-success"><span>Paid</span><span>{formatCurrency(Number(invoice.amount_paid) || 0)}</span></div>
             <div className="flex justify-between font-semibold text-destructive"><span>Balance Due</span><span>{formatCurrency(Number(invoice.balance_due))}</span></div>
           </div>
           <div className="mt-4 text-center">

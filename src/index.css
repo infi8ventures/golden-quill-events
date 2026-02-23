@@ -1055,6 +1055,155 @@
   border-top: 1px solid #cbd5e1;
 }
 
+/* =========================
+   Mobile-first responsive utilities
+   ========================= */
+
+/* iOS Safe Area Support */
+@supports (padding: max(0px)) {
+  /* Top safe area for notch/Dynamic Island */
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
+  }
+  
+  .pt-safe-plus {
+    padding-top: max(0.75rem, env(safe-area-inset-top));
+  }
+
+  /* Bottom safe area for home indicator */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
+  .pb-safe-plus {
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+  }
+
+  /* All sides safe area padding */
+  .p-safe {
+    padding-top: env(safe-area-inset-top);
+    padding-left: max(0.75rem, env(safe-area-inset-left));
+    padding-right: max(0.75rem, env(safe-area-inset-right));
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+  }
+  
+  /* Safe area insets as CSS variables */
+  :root {
+    --safe-area-top: env(safe-area-inset-top);
+    --safe-area-bottom: env(safe-area-inset-bottom);
+    --safe-area-left: env(safe-area-inset-left);
+    --safe-area-right: env(safe-area-inset-right);
+  }
+}
+
+/* iOS sheet/modal safe area fix */
+[data-mobile="true"] {
+  padding-top: env(safe-area-inset-top) !important;
+}
+
+/* Sticky header with safe area */
+.sticky-header-safe {
+  position: sticky;
+  top: 0;
+  padding-top: max(0.75rem, env(safe-area-inset-top));
+  background: hsl(var(--background) / 0.95);
+  backdrop-filter: blur(8px);
+  z-index: 40;
+}
+
+/* Ensure touch targets are large enough (44px min) */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Better tap highlighting on mobile */
+@media (hover: none) {
+  button, a, [role="button"] {
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+  }
+}
+
+/* Prevent horizontal overflow on mobile */
+html, body {
+  overflow-x: hidden;
+}
+
+/* Mobile-friendly glass card */
+@media (max-width: 640px) {
+  .glass-card {
+    border-radius: 12px;
+  }
+}
+
+/* Mobile table improvements */
+@media (max-width: 640px) {
+  table {
+    font-size: 13px;
+  }
+  
+  th, td {
+    padding: 8px 6px !important;
+  }
+}
+
+/* Responsive input sizing */
+@media (max-width: 640px) {
+  input, select, textarea {
+    font-size: 16px !important; /* Prevents iOS zoom on focus */
+  }
+}
+
+/* Mobile-friendly sticky summary */
+@media (max-width: 1024px) {
+  .sticky {
+    position: relative !important;
+    top: auto !important;
+  }
+}
+
+/* Bottom action bar for mobile */
+.mobile-bottom-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 12px 16px;
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
+  background: hsl(var(--background) / 0.95);
+  backdrop-filter: blur(8px);
+  border-top: 1px solid hsl(var(--border));
+  z-index: 50;
+}
+
+@media (min-width: 1024px) {
+  .mobile-bottom-bar {
+    display: none;
+  }
+}
+
+/* Hide on mobile utility */
+.hide-mobile {
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .hide-mobile {
+    display: block;
+  }
+}
+
+/* Show only on mobile */
+.show-mobile {
+  display: block;
+}
+
+@media (min-width: 640px) {
+  .show-mobile {
+    display: none;
+  }
+}
+
 @media print {
   body {
     background: white !important;
