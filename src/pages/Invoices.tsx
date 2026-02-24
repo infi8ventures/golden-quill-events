@@ -101,8 +101,11 @@ export default function Invoices() {
             <TableBody>
               {filtered.map((inv) => (
                 <TableRow key={inv.id} className="border-border hover:bg-secondary/50">
-                  <TableCell className="py-3">
-                    <p className="font-medium text-foreground text-sm">{inv.invoice_number}</p>
+                  <TableCell
+                    className="py-3 cursor-pointer"
+                    onClick={() => navigate(`/invoices/${inv.id}`)}
+                  >
+                    <p className="font-medium text-foreground hover:text-primary transition-colors text-sm">{inv.invoice_number}</p>
                     <p className="text-xs text-muted-foreground truncate max-w-[100px] sm:max-w-none">{inv.title}</p>
                   </TableCell>
                   <TableCell className="hidden sm:table-cell text-muted-foreground text-sm">{inv.client_name || inv.clients?.name || "-"}</TableCell>

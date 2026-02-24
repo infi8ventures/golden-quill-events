@@ -172,8 +172,11 @@ export default function Quotations() {
             <TableBody>
               {filtered.map((q) => (
                 <TableRow key={q.id} className="border-border hover:bg-secondary/50">
-                  <TableCell className="py-3">
-                    <p className="font-medium text-foreground text-sm">{q.quotation_number}</p>
+                  <TableCell
+                    className="py-3 cursor-pointer"
+                    onClick={() => navigate(`/quotations/${q.id}`)}
+                  >
+                    <p className="font-medium text-foreground hover:text-primary transition-colors text-sm">{q.quotation_number}</p>
                     <p className="text-xs text-muted-foreground truncate max-w-[120px] sm:max-w-none">{q.title}</p>
                   </TableCell>
                   <TableCell className="hidden sm:table-cell text-muted-foreground text-sm">{q.client_name || q.clients?.name || "-"}</TableCell>
