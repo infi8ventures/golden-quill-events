@@ -12,6 +12,7 @@ interface LocalData {
   quotation_items: any[];
   invoices: any[];
   invoice_items: any[];
+  payments: any[];
 }
 
 // Initialize local storage with default data
@@ -30,6 +31,7 @@ const DEFAULT_DATA: LocalData = {
   quotation_items: [],
   invoices: [],
   invoice_items: [],
+  payments: [],
 };
 
 // Get data from localStorage or use defaults
@@ -37,7 +39,15 @@ function getData(): LocalData {
   const stored = localStorage.getItem('app_local_db');
   if (stored) {
     try {
-      return JSON.parse(stored);
+      const parsed = JSON.parse(stored);
+      // Merge with DEFAULT_DATA to ensure newly added tables (like payments) exist
+      const merged: any = { ...DEFAULT_DATA, ...parsed };
+      for (const key of Object.keys(DEFAULT_DATA)) {
+        if (!merged[key] || !Array.isArray(merged[key])) {
+          merged[key] = [];
+        }
+      }
+      return merged as LocalData;
     } catch {
       return { ...DEFAULT_DATA };
     }
