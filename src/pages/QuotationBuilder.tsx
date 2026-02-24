@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import logoImg from "@/assets/logo.jpeg";
+import logoImg from "@/assets/KM_logo.png";
 
 interface LineItem {
   id?: string;
@@ -41,6 +41,8 @@ export default function QuotationBuilder() {
   const [discount, setDiscount] = useState(0);
   const [notes, setNotes] = useState("");
   const [terms, setTerms] = useState("Payment within 30 days of invoice date.");
+  const [clientName, setClientName] = useState("");
+  const [eventName, setEventName] = useState("");
   const [items, setItems] = useState<LineItem[]>([{ description: "", quantity: 1, unit: "nos", rate: 0, amount: 0 }]);
   const [clients, setClients] = useState<ClientOption[]>([]);
   const [events, setEvents] = useState<EventOption[]>([]);
@@ -62,6 +64,7 @@ export default function QuotationBuilder() {
       supabase.from("quotations").select("*").eq("id", id).single().then(({ data }) => {
         if (data) {
           setTitle(data.title); setClientId(data.client_id || ""); setEventId(data.event_id || "");
+          setClientName(data.client_name || ""); setEventName(data.event_name || "");
           setGstPercentage(Number(data.gst_percentage)); setDiscount(Number(data.discount));
           setNotes(data.notes || ""); setTerms(data.terms || "");
           setQuotationNumber(data.quotation_number || "");
@@ -105,17 +108,18 @@ export default function QuotationBuilder() {
       }
 
       const opt = {
-        margin: [0.5, 0.5, 0.5, 0.5] as [number, number, number, number],
+        margin: 0,
         filename: `Quotation_${quotationNumber}.pdf`,
-        image: { type: 'jpeg' as const, quality: 0.98 },
+        image: { type: 'png' as const },
         html2canvas: {
-          scale: 2,
+          scale: 3,
           logging: false,
-          backgroundColor: '#ffffff'
+          backgroundColor: '#ffffff',
+          useCORS: true
         },
         jsPDF: {
           unit: 'in' as const,
-          format: 'letter' as const,
+          format: 'a4' as const,
           orientation: 'portrait' as const
         }
       };
@@ -157,6 +161,8 @@ export default function QuotationBuilder() {
       title: cleanTitle,
       client_id: clientId || null,
       event_id: eventId || null,
+      client_name: clientName,
+      event_name: eventName,
       subtotal,
       gst_percentage: gstPercentage,
       gst_amount: gstAmount,
@@ -198,7 +204,7 @@ export default function QuotationBuilder() {
     <>
       {/* Print preview modal - optimized for mobile */}
       {showPrintPreview && isEdit && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/80 z-[9999] flex items-start justify-center overflow-auto p-2 sm:p-4"
           onClick={closePrintPreview}
           role="dialog"
@@ -215,7 +221,7 @@ export default function QuotationBuilder() {
               <X className="h-5 w-5" />
             </button>
           )}
-          
+
           {/* Loading indicator */}
           {isGeneratingPdf && (
             <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[10000] bg-primary text-primary-foreground px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2">
@@ -223,120 +229,143 @@ export default function QuotationBuilder() {
               Generating PDF...
             </div>
           )}
-          
-          <div 
-            id="quotation-print-content" 
+
+          <div
             className="bg-white max-w-[860px] w-full my-8 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="print-qt">
-              <div className="print-qt-sheet">
-                <div className="print-qt-frame">
-                  <div className="print-qt-rail" />
+            <div className="print-formal">
+              <div id="quotation-print-content" className="print-formal-sheet">
+                {/* Watermark Logo */}
+                <img src={logoImg} className="print-formal-watermark" alt="Watermark" />
 
-                  <div className="print-qt-main">
-                    <div className="print-qt-top">
-                      <div className="print-qt-brand">
-                        <img className="print-qt-logo" src={logoImg} alt="Logo" />
-                        <div className="print-qt-company">
-                          <div className="name">K M Enterprises</div>
-                          <div className="addr">
-                            #612, Nagendra Nilaya, 8th Main 1st Stage, Vijayanagar Mysuru
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="print-qt-badge">
-                        <div className="title">QUOTATION</div>
-                        <div className="kv">
-                          <div className="k">Quotation No</div>
-                          <div style={{ fontWeight: 800 }}>{quotationNumber}</div>
-                          <div className="k">Date</div>
-                          <div>{createdAt ? formatDate(createdAt) : "—"}</div>
-                          <div className="k">GSTIN</div>
-                          <div>29AAXFK3522C1Z6</div>
-                        </div>
-                      </div>
+                <div className="print-formal-header">
+                  <div className="print-formal-logo-container">
+                    <img src={logoImg} className="print-formal-logo" alt="Logo" />
+                  </div>
+                  <div className="print-formal-company">
+                    <div className="name">K M Enterprises</div>
+                    <div className="addr">
+                      #612, Nagendra Nilaya, 8th Main 1st Stage,<br />
+                      Vijayanagar Mysuru
                     </div>
+                  </div>
+                </div>
 
-                    <div className="print-qt-section" style={{ marginTop: 10 }}>
-                      <div className="hd">Items</div>
-                      <div className="bd" style={{ padding: 0 }}>
-                        <table className="print-qt-table">
-                          <thead>
-                            <tr>
-                              <th style={{ width: 32 }}>#</th>
-                              <th>Description</th>
-                              <th className="num" style={{ width: 62 }}>Qty</th>
-                              <th style={{ width: 56 }}>Unit</th>
-                              <th className="num" style={{ width: 86 }}>Rate</th>
-                              <th className="num" style={{ width: 100 }}>Amount</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {items.map((item, i) => (
-                              <tr key={i}>
-                                <td>{i + 1}</td>
-                                <td style={{ paddingRight: 14 }}>{item.description}</td>
-                                <td className="num">{item.quantity}</td>
-                                <td>{item.unit}</td>
-                                <td className="num">{formatCurrency(item.rate)}</td>
-                                <td className="num">{formatCurrency(item.amount)}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
+                <div className="print-formal-title-container">
+                  <div className="title">QUOTATION</div>
+                </div>
+
+                <div className="print-formal-divider" />
+
+                <div className="print-formal-details-grid">
+                  <div className="item">
+                    <span className="k">Quotation No</span>
+                    <span className="v">{quotationNumber}</span>
+                  </div>
+                  <div className="item">
+                    <span className="k">Date</span>
+                    <span className="v">{createdAt ? formatDate(createdAt) : "—"}</span>
+                  </div>
+                  <div className="item">
+                    <span className="k">GSTIN</span>
+                    <span className="v">29AAXFK3522C1Z6</span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-8 mb-6 relative z-[1]">
+                  <div>
+                    <div className="text-[10px] font-bold text-black uppercase tracking-wider mb-1">Bill To</div>
+                    <div className="text-sm font-bold text-black">{clientName || "—"}</div>
+                  </div>
+                  <div>
+                    <div className="text-[10px] font-bold text-black uppercase tracking-wider mb-1">Event</div>
+                    <div className="text-sm font-bold text-black">{eventName || "—"}</div>
+                  </div>
+                </div>
+
+                <div className="print-formal-section">
+                  <div className="hd">Description of Services</div>
+                  <table className="print-formal-table">
+                    <thead>
+                      <tr>
+                        <th style={{ width: '40px' }}>#</th>
+                        <th>Description</th>
+                        <th className="num" style={{ width: '60px' }}>Qty</th>
+                        <th style={{ width: '80px' }}>Unit</th>
+                        <th className="num" style={{ width: '100px' }}>Rate</th>
+                        <th className="num" style={{ width: '120px' }}>Amount</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {items.map((item, i) => (
+                        <tr key={i}>
+                          <td>{i + 1}</td>
+                          <td>{item.description}</td>
+                          <td className="num">{item.quantity}</td>
+                          <td>{item.unit}</td>
+                          <td className="num">{formatCurrency(item.rate)}</td>
+                          <td className="num">{formatCurrency(item.amount)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="print-formal-summary">
+                  <div />
+                  <div className="print-formal-totals">
+                    <div className="print-formal-total-row">
+                      <span className="k">Subtotal</span>
+                      <span>{formatCurrency(subtotal)}</span>
                     </div>
-
-                    <div className="print-qt-section" style={{ marginTop: 10 }}>
-                      <div className="hd">Summary</div>
-                      <div className="bd">
-                        <div className="print-qt-split">
-                          <div>
-                            <div className="print-qt-kv">
-                              <div className="k">Account Name</div>
-                              <div>K M Enterprises</div>
-                              <div className="k">Account No</div>
-                              <div>50200064343340</div>
-                              <div className="k">IFSC</div>
-                              <div>HDFC0000065</div>
-                              <div className="k">Branch</div>
-                              <div>HDFC Bank, Saraswathipuram</div>
-                            </div>
-                          </div>
-
-                          <div className="print-qt-totals">
-                            <div className="print-qt-row"><span className="k">Subtotal</span><span>{formatCurrency(subtotal)}</span></div>
-                            <div className="print-qt-row"><span className="k">Discount</span><span>{formatCurrency(discount)}</span></div>
-                            <div className="print-qt-row"><span className="k">GST ({gstPercentage}%)</span><span>{formatCurrency(gstAmount)}</span></div>
-                            <div className="print-qt-row grand"><span>Total</span><span>{formatCurrency(total)}</span></div>
-                          </div>
-                        </div>
-                      </div>
+                    <div className="print-formal-total-row">
+                      <span className="k">Discount</span>
+                      <span>{formatCurrency(discount)}</span>
                     </div>
-
-                    <div className="print-qt-footer">
-                      <div className="print-qt-section" style={{ marginTop: 10 }}>
-                        <div className="hd">Notes</div>
-                        <div className="bd">{notes || "—"}</div>
-                      </div>
-                      <div className="print-qt-section" style={{ marginTop: 10 }}>
-                        <div className="hd">Terms</div>
-                        <div className="bd">{terms || "—"}</div>
-                      </div>
+                    <div className="print-formal-total-row">
+                      <span className="k">GST ({gstPercentage}%)</span>
+                      <span>{formatCurrency(gstAmount)}</span>
                     </div>
-
-                    <div className="print-qt-sign">
-                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, fontSize: 11 }}>
-                        <div style={{ color: '#64748b' }}>Thank you for your business.</div>
-                        <div style={{ textAlign: 'right' }}>
-                          <div style={{ fontWeight: 800 }}>Authorized Signatory</div>
-                          <div className="line" />
-                        </div>
-                      </div>
+                    <div className="print-formal-total-row grand">
+                      <span>Total Amount</span>
+                      <span>{formatCurrency(total)}</span>
                     </div>
+                  </div>
+                </div>
 
+                <div className="mt-8">
+                  {notes && (
+                    <div className="print-formal-section">
+                      <div className="hd">Notes</div>
+                      <div style={{ fontSize: '11px', color: '#000000', fontWeight: 500 }}>{notes}</div>
+                    </div>
+                  )}
+                  <div className="print-formal-section">
+                    <div className="hd">Terms & Conditions</div>
+                    <div style={{ fontSize: '11px', color: '#000000', fontWeight: 500 }}>{terms}</div>
+                  </div>
+                </div>
+
+                <div className="print-formal-thanks-container">
+                  <div className="print-formal-thanks">
+                    Thank you for your business.
+                  </div>
+                </div>
+
+                <div className="print-formal-footer">
+                  <div className="print-formal-left-col">
+                    <div className="print-formal-bank">
+                      <div className="hd-sub">Bank Details</div>
+                      <div className="row"><span className="k">Account Name:</span> K M Enterprises</div>
+                      <div className="row"><span className="k">Account No:</span> 50200064343340</div>
+                      <div className="row"><span className="k">IFSC:</span> HDFC0000065</div>
+                      <div className="row"><span className="k">Branch:</span> HDFC Bank, Saraswathipuram</div>
+                    </div>
+                  </div>
+                  <div className="print-formal-sign">
+                    <div className="line" />
+                    <div className="role">Authorized Signatory</div>
                   </div>
                 </div>
               </div>
@@ -354,19 +383,19 @@ export default function QuotationBuilder() {
             action={
               isEdit ? (
                 <div className="flex gap-2">
-                  <Button 
-                    onClick={() => setShowPrintPreview(true)} 
-                    variant="ghost" 
-                    size="sm" 
+                  <Button
+                    onClick={() => setShowPrintPreview(true)}
+                    variant="ghost"
+                    size="sm"
                     className="text-muted-foreground hover:text-foreground"
                   >
                     <Eye className="h-4 w-4 sm:mr-2" />
                     <span className="hidden sm:inline">Preview</span>
                   </Button>
-                  <Button 
-                    onClick={handleDownloadPDF} 
-                    variant="outline" 
-                    size="sm" 
+                  <Button
+                    onClick={handleDownloadPDF}
+                    variant="outline"
+                    size="sm"
                     className="border-border text-foreground hover:bg-secondary"
                     disabled={isGeneratingPdf}
                   >
@@ -386,40 +415,34 @@ export default function QuotationBuilder() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <div className="sm:col-span-2">
                     <Label htmlFor="title" className="text-muted-foreground text-sm">Title</Label>
-                    <Input 
+                    <Input
                       id="title"
-                      value={title} 
-                      onChange={(e) => setTitle(e.target.value)} 
-                      className="mt-1 bg-secondary border-border h-11 sm:h-10" 
-                      placeholder="e.g. Wedding Decoration Package" 
-                      required 
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      className="mt-1 bg-secondary border-border h-11 sm:h-10"
+                      placeholder="e.g. Wedding Decoration Package"
+                      required
                     />
                   </div>
                   <div>
-                    <Label htmlFor="client" className="text-muted-foreground text-sm">Client</Label>
-                    <Select value={clientId} onValueChange={setClientId}>
-                      <SelectTrigger id="client" className="mt-1 bg-secondary border-border h-11 sm:h-10">
-                        <SelectValue placeholder="Select client" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-card border-border">
-                        {clients.map((c) => (
-                          <SelectItem key={c.id} value={c.id} className="py-3 sm:py-2">{c.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <Label htmlFor="client" className="text-muted-foreground text-sm">Client Name</Label>
+                    <Input
+                      id="client"
+                      value={clientName}
+                      onChange={(e) => setClientName(e.target.value)}
+                      className="mt-1 bg-secondary border-border h-11 sm:h-10"
+                      placeholder="Enter client name"
+                    />
                   </div>
                   <div>
-                    <Label htmlFor="event" className="text-muted-foreground text-sm">Event</Label>
-                    <Select value={eventId} onValueChange={setEventId}>
-                      <SelectTrigger id="event" className="mt-1 bg-secondary border-border h-11 sm:h-10">
-                        <SelectValue placeholder="Select event" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-card border-border">
-                        {events.map((e) => (
-                          <SelectItem key={e.id} value={e.id} className="py-3 sm:py-2">{e.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <Label htmlFor="event" className="text-muted-foreground text-sm">Event Name</Label>
+                    <Input
+                      id="event"
+                      value={eventName}
+                      onChange={(e) => setEventName(e.target.value)}
+                      className="mt-1 bg-secondary border-border h-11 sm:h-10"
+                      placeholder="Enter event name"
+                    />
                   </div>
                 </div>
               </div>
@@ -428,10 +451,10 @@ export default function QuotationBuilder() {
               <div className="glass-card rounded-xl p-4 sm:p-6">
                 <div className="flex items-center justify-between mb-3 sm:mb-4">
                   <h3 className="font-serif font-semibold text-foreground text-sm sm:text-base">Line Items</h3>
-                  <Button 
-                    onClick={addItem} 
-                    variant="outline" 
-                    size="sm" 
+                  <Button
+                    onClick={addItem}
+                    variant="outline"
+                    size="sm"
                     className="border-primary/30 text-primary hover:bg-primary/10 text-xs sm:text-sm h-9 px-3"
                   >
                     <Plus className="h-4 w-4 mr-1" />Add Item
@@ -448,8 +471,8 @@ export default function QuotationBuilder() {
                             Item {i + 1}
                           </span>
                           {items.length > 1 && (
-                            <button 
-                              onClick={() => removeItem(i)} 
+                            <button
+                              onClick={() => removeItem(i)}
                               className="text-muted-foreground hover:text-destructive p-2 -mr-2 touch-manipulation"
                               aria-label={`Remove item ${i + 1}`}
                             >
@@ -457,52 +480,52 @@ export default function QuotationBuilder() {
                             </button>
                           )}
                         </div>
-                        
+
                         <div>
                           <Label htmlFor={`desc-${i}`} className="text-xs text-muted-foreground">Description</Label>
-                          <Input 
+                          <Input
                             id={`desc-${i}`}
-                            value={item.description} 
-                            onChange={(e) => updateItem(i, "description", e.target.value)} 
-                            className="bg-background border-border mt-1 h-11" 
-                            placeholder="Item description" 
+                            value={item.description}
+                            onChange={(e) => updateItem(i, "description", e.target.value)}
+                            className="bg-background border-border mt-1 h-11"
+                            placeholder="Item description"
                           />
                         </div>
-                        
+
                         <div className="grid grid-cols-3 gap-2">
                           <div>
                             <Label htmlFor={`qty-${i}`} className="text-xs text-muted-foreground">Qty</Label>
-                            <Input 
+                            <Input
                               id={`qty-${i}`}
-                              type="number" 
+                              type="number"
                               inputMode="decimal"
-                              value={item.quantity} 
-                              onChange={(e) => updateItem(i, "quantity", Number(e.target.value))} 
-                              className="bg-background border-border mt-1 h-11 text-center" 
+                              value={item.quantity}
+                              onChange={(e) => updateItem(i, "quantity", Number(e.target.value))}
+                              className="bg-background border-border mt-1 h-11 text-center"
                             />
                           </div>
                           <div>
                             <Label htmlFor={`unit-${i}`} className="text-xs text-muted-foreground">Unit</Label>
-                            <Input 
+                            <Input
                               id={`unit-${i}`}
-                              value={item.unit} 
-                              onChange={(e) => updateItem(i, "unit", e.target.value)} 
-                              className="bg-background border-border mt-1 h-11 text-center" 
+                              value={item.unit}
+                              onChange={(e) => updateItem(i, "unit", e.target.value)}
+                              className="bg-background border-border mt-1 h-11 text-center"
                             />
                           </div>
                           <div>
                             <Label htmlFor={`rate-${i}`} className="text-xs text-muted-foreground">Rate (₹)</Label>
-                            <Input 
+                            <Input
                               id={`rate-${i}`}
-                              type="number" 
+                              type="number"
                               inputMode="decimal"
-                              value={item.rate} 
-                              onChange={(e) => updateItem(i, "rate", Number(e.target.value))} 
-                              className="bg-background border-border mt-1 h-11 text-right" 
+                              value={item.rate}
+                              onChange={(e) => updateItem(i, "rate", Number(e.target.value))}
+                              className="bg-background border-border mt-1 h-11 text-right"
                             />
                           </div>
                         </div>
-                        
+
                         <div className="flex justify-between items-center pt-2 border-t border-border/50">
                           <span className="text-xs text-muted-foreground">Amount</span>
                           <span className="font-semibold text-foreground">{formatCurrency(item.amount)}</span>
@@ -513,37 +536,37 @@ export default function QuotationBuilder() {
                       <div className="hidden sm:grid grid-cols-12 gap-2 items-end">
                         <div className="col-span-4">
                           {i === 0 && <Label className="text-xs text-muted-foreground">Description</Label>}
-                          <Input 
-                            value={item.description} 
-                            onChange={(e) => updateItem(i, "description", e.target.value)} 
-                            className="bg-secondary border-border" 
-                            placeholder="Description" 
+                          <Input
+                            value={item.description}
+                            onChange={(e) => updateItem(i, "description", e.target.value)}
+                            className="bg-secondary border-border"
+                            placeholder="Description"
                           />
                         </div>
                         <div className="col-span-2">
                           {i === 0 && <Label className="text-xs text-muted-foreground">Qty</Label>}
-                          <Input 
-                            type="number" 
-                            value={item.quantity} 
-                            onChange={(e) => updateItem(i, "quantity", Number(e.target.value))} 
-                            className="bg-secondary border-border" 
+                          <Input
+                            type="number"
+                            value={item.quantity}
+                            onChange={(e) => updateItem(i, "quantity", Number(e.target.value))}
+                            className="bg-secondary border-border"
                           />
                         </div>
                         <div className="col-span-2">
                           {i === 0 && <Label className="text-xs text-muted-foreground">Unit</Label>}
-                          <Input 
-                            value={item.unit} 
-                            onChange={(e) => updateItem(i, "unit", e.target.value)} 
-                            className="bg-secondary border-border" 
+                          <Input
+                            value={item.unit}
+                            onChange={(e) => updateItem(i, "unit", e.target.value)}
+                            className="bg-secondary border-border"
                           />
                         </div>
                         <div className="col-span-2">
                           {i === 0 && <Label className="text-xs text-muted-foreground">Rate</Label>}
-                          <Input 
-                            type="number" 
-                            value={item.rate} 
-                            onChange={(e) => updateItem(i, "rate", Number(e.target.value))} 
-                            className="bg-secondary border-border" 
+                          <Input
+                            type="number"
+                            value={item.rate}
+                            onChange={(e) => updateItem(i, "rate", Number(e.target.value))}
+                            className="bg-secondary border-border"
                           />
                         </div>
                         <div className="col-span-1 text-right text-sm text-foreground pt-1">
@@ -552,8 +575,8 @@ export default function QuotationBuilder() {
                         </div>
                         <div className="col-span-1 flex justify-end">
                           {items.length > 1 && (
-                            <button 
-                              onClick={() => removeItem(i)} 
+                            <button
+                              onClick={() => removeItem(i)}
                               className="text-muted-foreground hover:text-destructive p-1"
                               aria-label={`Remove item ${i + 1}`}
                             >
@@ -568,9 +591,9 @@ export default function QuotationBuilder() {
 
                 {/* Mobile: Add item button at bottom too */}
                 <div className="sm:hidden mt-4 pt-3 border-t border-border/50">
-                  <Button 
-                    onClick={addItem} 
-                    variant="outline" 
+                  <Button
+                    onClick={addItem}
+                    variant="outline"
                     className="w-full border-dashed border-primary/30 text-primary hover:bg-primary/5 h-11"
                   >
                     <Plus className="h-4 w-4 mr-2" />Add Another Item
@@ -584,23 +607,23 @@ export default function QuotationBuilder() {
                 <div className="grid sm:grid-cols-2 gap-3 sm:gap-4">
                   <div>
                     <Label htmlFor="notes" className="text-muted-foreground text-sm">Notes</Label>
-                    <Textarea 
+                    <Textarea
                       id="notes"
-                      value={notes} 
-                      onChange={(e) => setNotes(e.target.value)} 
-                      className="mt-1 bg-secondary border-border min-h-[100px]" 
-                      rows={3} 
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                      className="mt-1 bg-secondary border-border min-h-[100px]"
+                      rows={3}
                       placeholder="Additional notes for the client..."
                     />
                   </div>
                   <div>
                     <Label htmlFor="terms" className="text-muted-foreground text-sm">Terms & Conditions</Label>
-                    <Textarea 
+                    <Textarea
                       id="terms"
-                      value={terms} 
-                      onChange={(e) => setTerms(e.target.value)} 
-                      className="mt-1 bg-secondary border-border min-h-[100px]" 
-                      rows={3} 
+                      value={terms}
+                      onChange={(e) => setTerms(e.target.value)}
+                      className="mt-1 bg-secondary border-border min-h-[100px]"
+                      rows={3}
                       placeholder="Payment terms, delivery conditions..."
                     />
                   </div>
@@ -619,22 +642,22 @@ export default function QuotationBuilder() {
                   </div>
                   <div className="flex justify-between items-center">
                     <Label htmlFor="discount-desktop" className="text-muted-foreground">Discount</Label>
-                    <Input 
+                    <Input
                       id="discount-desktop"
-                      type="number" 
-                      value={discount} 
-                      onChange={(e) => setDiscount(Number(e.target.value))} 
-                      className="w-28 bg-secondary border-border text-right h-8" 
+                      type="number"
+                      value={discount}
+                      onChange={(e) => setDiscount(Number(e.target.value))}
+                      className="w-28 bg-secondary border-border text-right h-8"
                     />
                   </div>
                   <div className="flex justify-between items-center">
                     <Label htmlFor="gst-desktop" className="text-muted-foreground">GST (%)</Label>
-                    <Input 
+                    <Input
                       id="gst-desktop"
-                      type="number" 
-                      value={gstPercentage} 
-                      onChange={(e) => setGstPercentage(Number(e.target.value))} 
-                      className="w-28 bg-secondary border-border text-right h-8" 
+                      type="number"
+                      value={gstPercentage}
+                      onChange={(e) => setGstPercentage(Number(e.target.value))}
+                      className="w-28 bg-secondary border-border text-right h-8"
                     />
                   </div>
                   <div className="flex justify-between">
@@ -663,24 +686,24 @@ export default function QuotationBuilder() {
                   </div>
                   <div className="flex justify-between items-center">
                     <Label htmlFor="discount-mobile" className="text-muted-foreground">Discount</Label>
-                    <Input 
+                    <Input
                       id="discount-mobile"
-                      type="number" 
+                      type="number"
                       inputMode="decimal"
-                      value={discount} 
-                      onChange={(e) => setDiscount(Number(e.target.value))} 
-                      className="w-28 bg-secondary border-border text-right h-10 text-sm" 
+                      value={discount}
+                      onChange={(e) => setDiscount(Number(e.target.value))}
+                      className="w-28 bg-secondary border-border text-right h-10 text-sm"
                     />
                   </div>
                   <div className="flex justify-between items-center">
                     <Label htmlFor="gst-mobile" className="text-muted-foreground">GST (%)</Label>
-                    <Input 
+                    <Input
                       id="gst-mobile"
-                      type="number" 
+                      type="number"
                       inputMode="decimal"
-                      value={gstPercentage} 
-                      onChange={(e) => setGstPercentage(Number(e.target.value))} 
-                      className="w-28 bg-secondary border-border text-right h-10 text-sm" 
+                      value={gstPercentage}
+                      onChange={(e) => setGstPercentage(Number(e.target.value))}
+                      className="w-28 bg-secondary border-border text-right h-10 text-sm"
                     />
                   </div>
                   <div className="flex justify-between">
@@ -700,17 +723,17 @@ export default function QuotationBuilder() {
           <div className="lg:hidden mobile-bottom-bar">
             <div className="flex gap-2">
               {isEdit && (
-                <Button 
-                  onClick={handleDownloadPDF} 
-                  variant="outline" 
+                <Button
+                  onClick={handleDownloadPDF}
+                  variant="outline"
                   className="flex-1 h-12 border-border"
                   disabled={isGeneratingPdf}
                 >
                   <Download className="h-4 w-4 mr-2" />PDF
                 </Button>
               )}
-              <Button 
-                onClick={handleSave} 
+              <Button
+                onClick={handleSave}
                 className={`gold-gradient text-primary-foreground font-semibold h-12 ${isEdit ? 'flex-[2]' : 'w-full'}`}
               >
                 <Save className="h-4 w-4 mr-2" />Save Quotation
