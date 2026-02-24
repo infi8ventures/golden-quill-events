@@ -2,14 +2,14 @@ import { LayoutDashboard, Users, Calendar, FileText, Receipt, LogOut } from "luc
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/hooks/useAuth";
 import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarFooter,
+	Sidebar,
+	SidebarContent,
+	SidebarGroup,
+	SidebarGroupContent,
+	SidebarMenu,
+	SidebarMenuButton,
+	SidebarMenuItem,
+	SidebarFooter,
 } from "@/components/ui/sidebar";
 
 const navGroups = [
@@ -39,7 +39,7 @@ export function AppSidebar() {
 	return (
 		<Sidebar className="border-r border-border">
 			<div className="p-6">
-				<h1 className="font-serif text-xl font-bold gold-text">EventPro</h1>
+				<h1 className="font-serif text-xl font-bold gold-text">InvoiceFlow</h1>
 				<p className="text-xs text-muted-foreground mt-1">Management Suite</p>
 			</div>
 			<SidebarContent>
