@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Eye, Trash2, Search, Receipt, Download, MoreVertical } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { formatCurrency, formatDate } from "@/lib/supabase-helpers";
@@ -33,6 +33,7 @@ export default function Invoices() {
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -47,7 +48,7 @@ export default function Invoices() {
 
   const { query, setQuery, filtered } = useTableSearch(invoices, (inv) => {
     return [inv.invoice_number, inv.title, inv.status, inv.clients?.name || "", inv.client_name || "", inv.event_name || ""].join(" ");
-  });
+  }, searchParams.get("search") || "");
 
   const handleDelete = async (id: string) => {
     await supabase.from("invoices").delete().eq("id", id);

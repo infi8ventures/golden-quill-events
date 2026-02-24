@@ -37,7 +37,9 @@ export default function QuotationBuilder() {
   const [title, setTitle] = useState("");
   const [clientId, setClientId] = useState("");
   const [eventId, setEventId] = useState("");
-  const [gstPercentage, setGstPercentage] = useState(18);
+  const [cgstPercentage, setCgstPercentage] = useState(9);
+  const [sgstPercentage, setSgstPercentage] = useState(9);
+  const [igstPercentage, setIgstPercentage] = useState(0);
   const [discount, setDiscount] = useState(0);
   const [notes, setNotes] = useState("");
   const [terms, setTerms] = useState("Payment within 30 days of invoice date.");
@@ -52,8 +54,11 @@ export default function QuotationBuilder() {
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
   const subtotal = items.reduce((s, i) => s + i.amount, 0);
-  const gstAmount = (subtotal - discount) * (gstPercentage / 100);
-  const total = subtotal - discount + gstAmount;
+  const cgstAmount = (subtotal - discount) * (cgstPercentage / 100);
+  const sgstAmount = (subtotal - discount) * (sgstPercentage / 100);
+  const igstAmount = (subtotal - discount) * (igstPercentage / 100);
+  const totalGstAmount = cgstAmount + sgstAmount + igstAmount;
+  const total = subtotal - discount + totalGstAmount;
 
   useEffect(() => {
     if (!user) return;
@@ -65,7 +70,10 @@ export default function QuotationBuilder() {
         if (data) {
           setTitle(data.title); setClientId(data.client_id || ""); setEventId(data.event_id || "");
           setClientName(data.client_name || ""); setEventName(data.event_name || "");
-          setGstPercentage(Number(data.gst_percentage)); setDiscount(Number(data.discount));
+          setCgstPercentage(Number(data.cgst_percentage || 0));
+          setSgstPercentage(Number(data.sgst_percentage || 0));
+          setIgstPercentage(Number(data.igst_percentage || 0));
+          setDiscount(Number(data.discount || 0));
           setNotes(data.notes || ""); setTerms(data.terms || "");
           setQuotationNumber(data.quotation_number || "");
           setCreatedAt(data.created_at || "");
@@ -156,16 +164,53 @@ export default function QuotationBuilder() {
       return;
     }
 
+    let finalClientId = clientId || null;
+
+    // Auto-link or Create Client based on clientName
+    if (!finalClientId && clientName.trim()) {
+      const cleanName = clientName.trim();
+
+      // Try to find existing client by exact name (case-insensitive)
+      const { data: existingClients, error: searchError } = await supabase
+        .from("clients")
+        .select("id")
+        .ilike("name", cleanName)
+        .limit(1);
+
+      if (!searchError && existingClients && existingClients.length > 0) {
+        // Link to existing
+        finalClientId = existingClients[0].id;
+        setClientId(finalClientId); // Update state for future saves in this session
+      } else {
+        // Create new client
+        const { data: newClient, error: createError } = await supabase
+          .from("clients")
+          .insert({ name: cleanName, user_id: userId })
+          .select("id")
+          .single();
+
+        if (!createError && newClient) {
+          finalClientId = newClient.id;
+          setClientId(finalClientId); // Update state
+        } else {
+          console.error("Failed to auto-create client:", createError);
+        }
+      }
+    }
+
     const quotationData = {
       user_id: userId,
       title: cleanTitle,
-      client_id: clientId || null,
+      client_id: finalClientId,
       event_id: eventId || null,
       client_name: clientName,
       event_name: eventName,
       subtotal,
-      gst_percentage: gstPercentage,
-      gst_amount: gstAmount,
+      gst_percentage: cgstPercentage + sgstPercentage + igstPercentage,
+      gst_amount: totalGstAmount,
+      cgst_percentage: cgstPercentage,
+      sgst_percentage: sgstPercentage,
+      igst_percentage: igstPercentage,
       discount,
       total,
       notes,
@@ -323,10 +368,24 @@ export default function QuotationBuilder() {
                       <span className="k">Discount</span>
                       <span>{formatCurrency(discount)}</span>
                     </div>
-                    <div className="print-formal-total-row">
-                      <span className="k">GST ({gstPercentage}%)</span>
-                      <span>{formatCurrency(gstAmount)}</span>
-                    </div>
+                    {cgstPercentage > 0 && (
+                      <div className="print-formal-total-row">
+                        <span className="k">CGST ({cgstPercentage}%)</span>
+                        <span>{formatCurrency(cgstAmount)}</span>
+                      </div>
+                    )}
+                    {sgstPercentage > 0 && (
+                      <div className="print-formal-total-row">
+                        <span className="k">SGST ({sgstPercentage}%)</span>
+                        <span>{formatCurrency(sgstAmount)}</span>
+                      </div>
+                    )}
+                    {igstPercentage > 0 && (
+                      <div className="print-formal-total-row">
+                        <span className="k">IGST ({igstPercentage}%)</span>
+                        <span>{formatCurrency(igstAmount)}</span>
+                      </div>
+                    )}
                     <div className="print-formal-total-row grand">
                       <span>Total Amount</span>
                       <span>{formatCurrency(total)}</span>
@@ -651,18 +710,38 @@ export default function QuotationBuilder() {
                     />
                   </div>
                   <div className="flex justify-between items-center">
-                    <Label htmlFor="gst-desktop" className="text-muted-foreground">GST (%)</Label>
+                    <Label htmlFor="cgst-desktop" className="text-muted-foreground">CGST (%)</Label>
                     <Input
-                      id="gst-desktop"
+                      id="cgst-desktop"
                       type="number"
-                      value={gstPercentage}
-                      onChange={(e) => setGstPercentage(Number(e.target.value))}
+                      value={cgstPercentage}
+                      onChange={(e) => setCgstPercentage(Number(e.target.value))}
+                      className="w-28 bg-secondary border-border text-right h-8"
+                    />
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <Label htmlFor="sgst-desktop" className="text-muted-foreground">SGST (%)</Label>
+                    <Input
+                      id="sgst-desktop"
+                      type="number"
+                      value={sgstPercentage}
+                      onChange={(e) => setSgstPercentage(Number(e.target.value))}
+                      className="w-28 bg-secondary border-border text-right h-8"
+                    />
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <Label htmlFor="igst-desktop" className="text-muted-foreground">IGST (%)</Label>
+                    <Input
+                      id="igst-desktop"
+                      type="number"
+                      value={igstPercentage}
+                      onChange={(e) => setIgstPercentage(Number(e.target.value))}
                       className="w-28 bg-secondary border-border text-right h-8"
                     />
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">GST Amount</span>
-                    <span className="text-foreground">{formatCurrency(gstAmount)}</span>
+                    <span className="text-muted-foreground">Total Taxes</span>
+                    <span className="text-foreground">{formatCurrency(totalGstAmount)}</span>
                   </div>
                   <div className="border-t border-border pt-3 flex justify-between font-serif font-bold text-lg">
                     <span className="text-foreground">Total</span>
@@ -696,19 +775,41 @@ export default function QuotationBuilder() {
                     />
                   </div>
                   <div className="flex justify-between items-center">
-                    <Label htmlFor="gst-mobile" className="text-muted-foreground">GST (%)</Label>
+                    <Label htmlFor="cgst-mobile" className="text-muted-foreground">CGST (%)</Label>
                     <Input
-                      id="gst-mobile"
+                      id="cgst-mobile"
                       type="number"
                       inputMode="decimal"
-                      value={gstPercentage}
-                      onChange={(e) => setGstPercentage(Number(e.target.value))}
+                      value={cgstPercentage}
+                      onChange={(e) => setCgstPercentage(Number(e.target.value))}
+                      className="w-28 bg-secondary border-border text-right h-10 text-sm"
+                    />
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <Label htmlFor="sgst-mobile" className="text-muted-foreground">SGST (%)</Label>
+                    <Input
+                      id="sgst-mobile"
+                      type="number"
+                      inputMode="decimal"
+                      value={sgstPercentage}
+                      onChange={(e) => setSgstPercentage(Number(e.target.value))}
+                      className="w-28 bg-secondary border-border text-right h-10 text-sm"
+                    />
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <Label htmlFor="igst-mobile" className="text-muted-foreground">IGST (%)</Label>
+                    <Input
+                      id="igst-mobile"
+                      type="number"
+                      inputMode="decimal"
+                      value={igstPercentage}
+                      onChange={(e) => setIgstPercentage(Number(e.target.value))}
                       className="w-28 bg-secondary border-border text-right h-10 text-sm"
                     />
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">GST Amount</span>
-                    <span className="text-foreground">{formatCurrency(gstAmount)}</span>
+                    <span className="text-muted-foreground">Total Taxes</span>
+                    <span className="text-foreground">{formatCurrency(totalGstAmount)}</span>
                   </div>
                   <div className="border-t border-border pt-3 flex justify-between font-serif font-bold text-base">
                     <span className="text-foreground">Total</span>

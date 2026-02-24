@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { Plus, Download } from "lucide-react";
+import { Plus, Download, Edit2, Check, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { formatCurrency, formatDate } from "@/lib/supabase-helpers";
@@ -19,6 +19,7 @@ import logoImg from "@/assets/KM_logo.png";
 interface Invoice {
   id: string; invoice_number: string; title: string; subtotal: number; gst_percentage: number;
   gst_amount: number; discount: number; total: number; amount_paid: number; balance_due: number;
+  cgst_percentage: number; sgst_percentage: number; igst_percentage: number;
   status: string; created_at: string; notes: string; terms: string;
   client_name?: string;
   event_name?: string;
@@ -46,6 +47,9 @@ export default function InvoiceDetail() {
   const [payRef, setPayRef] = useState("");
 
   const [showPrintPreview, setShowPrintPreview] = useState(false);
+
+  const [isEditingNumber, setIsEditingNumber] = useState(false);
+  const [editInvoiceNumber, setEditInvoiceNumber] = useState("");
 
   const fetchData = async () => {
     const { data: inv } = await supabase.from("invoices").select("*, clients(name, email, phone, company, gst_number)").eq("id", id).single();
@@ -100,6 +104,24 @@ export default function InvoiceDetail() {
     await supabase.from("invoices").update({ amount_paid: newPaid, balance_due: Math.max(0, newBalance), status: newStatus }).eq("id", invoice.id);
     toast({ title: "Payment recorded!" });
     setPayOpen(false);
+    fetchData();
+  };
+
+  const handleSaveInvoiceNumber = async () => {
+    if (!invoice || !editInvoiceNumber.trim()) return;
+
+    const { error } = await supabase
+      .from("invoices")
+      .update({ invoice_number: editInvoiceNumber.trim() })
+      .eq("id", invoice.id);
+
+    if (error) {
+      toast({ title: "Error updating invoice number", description: error.message, variant: "destructive" });
+      return;
+    }
+
+    toast({ title: "Invoice number updated!" });
+    setIsEditingNumber(false);
     fetchData();
   };
 
@@ -259,10 +281,24 @@ export default function InvoiceDetail() {
                         <span>-{formatCurrency(Number(invoice.discount))}</span>
                       </div>
                     )}
-                    <div className="print-formal-total-row">
-                      <span className="k">GST ({invoice.gst_percentage}%)</span>
-                      <span>{formatCurrency(Number(invoice.gst_amount))}</span>
-                    </div>
+                    {Number(invoice.cgst_percentage) > 0 && (
+                      <div className="print-formal-total-row">
+                        <span className="k">CGST ({invoice.cgst_percentage}%)</span>
+                        <span>{formatCurrency((Number(invoice.subtotal) - Number(invoice.discount)) * (Number(invoice.cgst_percentage) / 100))}</span>
+                      </div>
+                    )}
+                    {Number(invoice.sgst_percentage) > 0 && (
+                      <div className="print-formal-total-row">
+                        <span className="k">SGST ({invoice.sgst_percentage}%)</span>
+                        <span>{formatCurrency((Number(invoice.subtotal) - Number(invoice.discount)) * (Number(invoice.sgst_percentage) / 100))}</span>
+                      </div>
+                    )}
+                    {Number(invoice.igst_percentage) > 0 && (
+                      <div className="print-formal-total-row">
+                        <span className="k">IGST ({invoice.igst_percentage}%)</span>
+                        <span>{formatCurrency((Number(invoice.subtotal) - Number(invoice.discount)) * (Number(invoice.igst_percentage) / 100))}</span>
+                      </div>
+                    )}
                     <div className="print-formal-total-row grand">
                       <span>Total Amount</span>
                       <span>{formatCurrency(Number(invoice.total))}</span>
@@ -324,7 +360,35 @@ export default function InvoiceDetail() {
       <AppLayout>
         <div className="no-print">
           <PageHeader
-            title={invoice.invoice_number}
+            title={
+              isEditingNumber ? (
+                <div className="flex items-center gap-2">
+                  <Input
+                    value={editInvoiceNumber}
+                    onChange={(e) => setEditInvoiceNumber(e.target.value)}
+                    className="h-9 w-48 text-lg font-serif"
+                    autoFocus
+                  />
+                  <Button size="icon" variant="ghost" onClick={handleSaveInvoiceNumber} className="h-8 w-8 text-success"><Check className="h-4 w-4" /></Button>
+                  <Button size="icon" variant="ghost" onClick={() => setIsEditingNumber(false)} className="h-8 w-8 text-destructive"><X className="h-4 w-4" /></Button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 group">
+                  <span>{invoice.invoice_number}</span>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    onClick={() => {
+                      setEditInvoiceNumber(invoice.invoice_number);
+                      setIsEditingNumber(true);
+                    }}
+                    className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <Edit2 className="h-3 w-3 text-muted-foreground" />
+                  </Button>
+                </div>
+              )
+            }
             subtitle={invoice.title}
             action={
               <div className="flex gap-3">
@@ -418,7 +482,9 @@ export default function InvoiceDetail() {
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between"><span className="text-muted-foreground">Subtotal</span><span>{formatCurrency(Number(invoice.subtotal))}</span></div>
                 {Number(invoice.discount) > 0 && <div className="flex justify-between"><span className="text-muted-foreground">Discount</span><span>-{formatCurrency(Number(invoice.discount))}</span></div>}
-                <div className="flex justify-between"><span className="text-muted-foreground">GST ({invoice.gst_percentage}%)</span><span>{formatCurrency(Number(invoice.gst_amount))}</span></div>
+                {Number(invoice.cgst_percentage) > 0 && <div className="flex justify-between"><span className="text-muted-foreground">CGST ({invoice.cgst_percentage}%)</span><span>{formatCurrency((Number(invoice.subtotal) - Number(invoice.discount)) * (Number(invoice.cgst_percentage) / 100))}</span></div>}
+                {Number(invoice.sgst_percentage) > 0 && <div className="flex justify-between"><span className="text-muted-foreground">SGST ({invoice.sgst_percentage}%)</span><span>{formatCurrency((Number(invoice.subtotal) - Number(invoice.discount)) * (Number(invoice.sgst_percentage) / 100))}</span></div>}
+                {Number(invoice.igst_percentage) > 0 && <div className="flex justify-between"><span className="text-muted-foreground">IGST ({invoice.igst_percentage}%)</span><span>{formatCurrency((Number(invoice.subtotal) - Number(invoice.discount)) * (Number(invoice.igst_percentage) / 100))}</span></div>}
                 <div className="border-t border-border pt-3 flex justify-between font-bold text-lg font-serif">
                   <span>Total</span><span className="gold-text">{formatCurrency(Number(invoice.total))}</span>
                 </div>

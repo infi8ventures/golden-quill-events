@@ -6,11 +6,15 @@ interface StatCardProps {
   subtitle?: string;
   icon: ReactNode;
   trend?: string;
+  onClick?: () => void;
 }
 
-export function StatCard({ title, value, subtitle, icon, trend }: StatCardProps) {
+export function StatCard({ title, value, subtitle, icon, trend, onClick }: StatCardProps) {
   return (
-    <div className="glass-card rounded-xl p-6 gold-glow animate-fade-in">
+    <div
+      className={`glass-card rounded-xl p-6 gold-glow animate-fade-in ${onClick ? "cursor-pointer hover:bg-white/5 transition-colors" : ""}`}
+      onClick={onClick}
+    >
       <div className="flex items-start justify-between">
         <div>
           <p className="text-sm text-muted-foreground">{title}</p>

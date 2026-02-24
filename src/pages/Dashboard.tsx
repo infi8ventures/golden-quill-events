@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { IndianRupee, Users, Calendar, FileText, Receipt } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -18,6 +19,7 @@ interface DashboardStats {
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [stats, setStats] = useState<DashboardStats>({
     totalRevenue: 0,
     totalClients: 0,
@@ -67,31 +69,37 @@ export default function Dashboard() {
           title="Total Revenue"
           value={formatCurrency(stats.totalRevenue)}
           icon={<IndianRupee className="h-5 w-5" />}
+          onClick={() => navigate("/invoices?search=paid")}
         />
         <StatCard
           title="Pending Payments"
           value={formatCurrency(stats.pendingPayments)}
           icon={<Receipt className="h-5 w-5" />}
+          onClick={() => navigate("/invoices?search=unpaid")}
         />
         <StatCard
           title="Total Clients"
           value={String(stats.totalClients)}
           icon={<Users className="h-5 w-5" />}
+          onClick={() => navigate("/clients")}
         />
         <StatCard
           title="Total Events"
           value={String(stats.totalEvents)}
           icon={<Calendar className="h-5 w-5" />}
+          onClick={() => navigate("/events")}
         />
         <StatCard
           title="Quotations"
           value={String(stats.totalQuotations)}
           icon={<FileText className="h-5 w-5" />}
+          onClick={() => navigate("/quotations")}
         />
         <StatCard
           title="Invoices"
           value={String(stats.totalInvoices)}
           icon={<Receipt className="h-5 w-5" />}
+          onClick={() => navigate("/invoices")}
         />
       </div>
     </AppLayout>

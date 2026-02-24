@@ -6,6 +6,7 @@ import { VitePWA } from "vite-plugin-pwa";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
+  base: "/golden-quill-events/",
   server: {
     host: "::",
     port: 8080,
@@ -27,8 +28,8 @@ export default defineConfig(({ mode }) => ({
         background_color: "#0a0a0a",
         display: "standalone",
         orientation: "portrait-primary",
-        scope: "/",
-        start_url: "/",
+        scope: "/golden-quill-events/",
+        start_url: "/golden-quill-events/",
         icons: [
           {
             src: "/icon.ico",
