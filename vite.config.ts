@@ -18,7 +18,7 @@ export default defineConfig(({ mode }) => ({
     mode === "development" && componentTagger(),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["favicon.ico", "robots.txt", "apple-touch-icon.svg", "icon.svg"],
+      includeAssets: ["favicon.ico", "robots.txt", "apple-touch-icon.ico", "icon.ico"],
       manifest: {
         name: "Golden Quill Events - Invoice & Quotation",
         short_name: "Golden Quill",
@@ -31,13 +31,13 @@ export default defineConfig(({ mode }) => ({
         start_url: "/",
         icons: [
           {
-            src: "/icon.svg",
+            src: "/icon.ico",
             sizes: "any",
             type: "image/svg+xml",
             purpose: "any"
           },
           {
-            src: "/icon.svg",
+            src: "/icon.ico",
             sizes: "512x512",
             type: "image/svg+xml",
             purpose: "maskable"

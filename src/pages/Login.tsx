@@ -56,7 +56,7 @@ export default function Login() {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-serif font-bold gold-text">EventPro</h1>
+          <h1 className="text-4xl font-serif font-bold gold-text">InvoiceFlow</h1>
           <p className="text-muted-foreground mt-2">Premium Event Management Suite</p>
         </div>
 
