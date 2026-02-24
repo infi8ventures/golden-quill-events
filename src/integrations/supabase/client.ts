@@ -12,6 +12,7 @@ interface LocalData {
   quotation_items: any[];
   invoices: any[];
   invoice_items: any[];
+  payments: any[];
 }
 
 // Initialize local storage with default data
@@ -30,6 +31,7 @@ const DEFAULT_DATA: LocalData = {
   quotation_items: [],
   invoices: [],
   invoice_items: [],
+  payments: [],
 };
 
 // Get data from localStorage or use defaults
@@ -37,7 +39,15 @@ function getData(): LocalData {
   const stored = localStorage.getItem('app_local_db');
   if (stored) {
     try {
-      return JSON.parse(stored);
+      const parsed = JSON.parse(stored);
+      // Merge with DEFAULT_DATA to ensure newly added tables (like payments) exist
+      const merged: any = { ...DEFAULT_DATA, ...parsed };
+      for (const key of Object.keys(DEFAULT_DATA)) {
+        if (!merged[key] || !Array.isArray(merged[key])) {
+          merged[key] = [];
+        }
+      }
+      return merged as LocalData;
     } catch {
       return { ...DEFAULT_DATA };
     }
@@ -54,7 +64,7 @@ function saveData(data: LocalData): void {
 
 // Generate a UUID
 function generateId(): string {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
     const r = Math.random() * 16 | 0;
     const v = c === 'x' ? r : (r & 0x3 | 0x8);
     return v.toString(16);
@@ -153,10 +163,10 @@ class MockQueryBuilder {
 
   private executeInsert() {
     if (!this.pendingInsert) return { data: null, error: null };
-    
+
     const data = getData();
     const now = new Date().toISOString();
-    
+
     const newItems = this.pendingInsert.map(item => ({
       ...item,
       id: item.id || generateId(),
@@ -174,7 +184,7 @@ class MockQueryBuilder {
 
   private executeUpdate() {
     if (!this.pendingUpdate) return { data: null, error: null };
-    
+
     const data = getData();
     let updated: any[] = [];
 
@@ -217,7 +227,7 @@ class MockQueryBuilder {
     for (const match of relationMatches) {
       const relationTable = match[1] as keyof LocalData;
       const foreignKey = `${relationTable.replace(/s$/, '')}_id`; // e.g., "clients" -> "client_id"
-      
+
       if (this.data[relationTable]) {
         result = result.map((item: any) => {
           const relatedId = item[foreignKey];
@@ -261,7 +271,7 @@ class MockQueryBuilder {
   then(resolve: (result: any) => void, reject?: (error: any) => void) {
     try {
       let result;
-      
+
       if (this.pendingInsert) {
         result = this.executeInsert();
       } else if (this.pendingUpdate) {
@@ -271,7 +281,7 @@ class MockQueryBuilder {
       } else {
         result = this.executeSelect();
       }
-      
+
       resolve(result);
     } catch (error) {
       if (reject) reject(error);
@@ -283,11 +293,11 @@ class MockQueryBuilder {
 // Mock Supabase client
 export const supabase = {
   from: (table: string) => new MockQueryBuilder(table as keyof LocalData),
-  
+
   auth: {
     getSession: async () => ({ data: { session: null }, error: null }),
     onAuthStateChange: (_callback: any) => ({
-      data: { subscription: { unsubscribe: () => {} } },
+      data: { subscription: { unsubscribe: () => { } } },
     }),
     signOut: async () => ({ error: null }),
     signInWithPassword: async () => ({ data: { user: null, session: null }, error: { message: 'Auth disabled' } }),
