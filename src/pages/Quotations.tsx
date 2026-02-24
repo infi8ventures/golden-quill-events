@@ -30,6 +30,8 @@ interface Quotation {
   status: string;
   created_at: string;
   clients?: { name: string } | null;
+  client_name?: string;
+  event_name?: string;
 }
 
 export default function Quotations() {
@@ -54,7 +56,7 @@ export default function Quotations() {
   }, [user]);
 
   const { query, setQuery, filtered } = useTableSearch(quotations, (q) => {
-    return [q.quotation_number, q.title, q.status, q.clients?.name || ""].join(" ");
+    return [q.quotation_number, q.title, q.status, q.clients?.name || "", q.client_name || "", q.event_name || ""].join(" ");
   });
 
   const handleDelete = async (id: string) => {
@@ -79,6 +81,8 @@ export default function Quotations() {
       quotation_id: q.id,
       client_id: fullQ.client_id,
       event_id: fullQ.event_id,
+      client_name: fullQ.client_name,
+      event_name: fullQ.event_name,
       invoice_number: invoiceNumber,
       title: fullQ.title,
       subtotal: fullQ.subtotal,
@@ -169,7 +173,7 @@ export default function Quotations() {
                     <p className="font-medium text-foreground text-sm">{q.quotation_number}</p>
                     <p className="text-xs text-muted-foreground truncate max-w-[120px] sm:max-w-none">{q.title}</p>
                   </TableCell>
-                  <TableCell className="hidden sm:table-cell text-muted-foreground text-sm">{q.clients?.name || "-"}</TableCell>
+                  <TableCell className="hidden sm:table-cell text-muted-foreground text-sm">{q.client_name || q.clients?.name || "-"}</TableCell>
                   <TableCell className="hidden lg:table-cell text-muted-foreground text-sm">{formatDate(q.created_at)}</TableCell>
                   <TableCell className="font-medium text-foreground text-sm whitespace-nowrap">{formatCurrency(Number(q.total))}</TableCell>
                   <TableCell>

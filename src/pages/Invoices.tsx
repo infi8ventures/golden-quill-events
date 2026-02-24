@@ -25,6 +25,8 @@ import {
 interface Invoice {
   id: string; invoice_number: string; title: string; total: number; amount_paid: number;
   balance_due: number; status: string; created_at: string; clients?: { name: string } | null;
+  client_name?: string;
+  event_name?: string;
 }
 
 export default function Invoices() {
@@ -44,7 +46,7 @@ export default function Invoices() {
   useEffect(() => { if (user) fetchInvoices(); }, [user]);
 
   const { query, setQuery, filtered } = useTableSearch(invoices, (inv) => {
-    return [inv.invoice_number, inv.title, inv.status, inv.clients?.name || ""].join(" ");
+    return [inv.invoice_number, inv.title, inv.status, inv.clients?.name || "", inv.client_name || "", inv.event_name || ""].join(" ");
   });
 
   const handleDelete = async (id: string) => {
@@ -102,7 +104,7 @@ export default function Invoices() {
                     <p className="font-medium text-foreground text-sm">{inv.invoice_number}</p>
                     <p className="text-xs text-muted-foreground truncate max-w-[100px] sm:max-w-none">{inv.title}</p>
                   </TableCell>
-                  <TableCell className="hidden sm:table-cell text-muted-foreground text-sm">{inv.clients?.name || "-"}</TableCell>
+                  <TableCell className="hidden sm:table-cell text-muted-foreground text-sm">{inv.client_name || inv.clients?.name || "-"}</TableCell>
                   <TableCell className="hidden lg:table-cell text-muted-foreground text-sm">{formatDate(inv.created_at)}</TableCell>
                   <TableCell className="font-medium text-foreground text-sm whitespace-nowrap">{formatCurrency(Number(inv.total) || 0)}</TableCell>
                   <TableCell className="hidden md:table-cell text-success text-sm">{formatCurrency(Number(inv.amount_paid) || 0)}</TableCell>
