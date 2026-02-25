@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#F5D98A"/>
+      <stop offset="50%" style="stop-color:#D4AF37"/>
+      <stop offset="100%" style="stop-color:#B8941F"/>
+    </linearGradient>
+  </defs>
+  <!-- Background -->
+  <rect width="512" height="512" rx="96" fill="#0a0a0a"/>
+  <!-- Quill/Pen icon -->
+  <g transform="translate(100, 80) scale(0.6)">
+    <path fill="url(#gold)" d="M480.1 160.1L316.1 324.1L284.1 356.1L256 384L192 448L128 512L64 448L0 384L64 320L128 256L156.1 227.9L188.1 195.9L352.1 31.9C369.3 14.7 392.8 4 418.3 4C470.5 4 512 45.5 512 97.7C512 123.2 501.3 146.7 484.1 163.9L480.1 160.1Z"/>
+    <path fill="#0a0a0a" d="M316.1 324.1L284.1 356.1L256 384L192 320L256 256L316.1 324.1Z" opacity="0.3"/>
+  </g>
+  <!-- Letter G -->
+  <text x="256" y="340" font-family="Georgia, serif" font-size="200" font-weight="bold" fill="url(#gold)" text-anchor="middle">G</text>
+  <!-- Underline -->
+  <rect x="140" y="380" width="232" height="8" rx="4" fill="url(#gold)"/>
+</svg>
