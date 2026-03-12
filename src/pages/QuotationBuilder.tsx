@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Plus, Trash2, Save, Download, X, Eye } from "lucide-react";
+import { Plus, Trash2, ArrowLeft, Download, Eye, Save, X, Share2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { formatCurrency, formatDate } from "@/lib/supabase-helpers";
@@ -13,7 +13,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import logoImg from "@/assets/KM_logo.png";
+import logoImg from "@/assets/KM_Logo_Grey.png";
+import { FormalTemplate } from "@/components/templates/FormalTemplate";
+import { CreativeTemplate } from "@/components/templates/CreativeTemplate";
+import { ModernTemplate } from "@/components/templates/ModernTemplate";
+import type { TemplateData } from "@/components/templates/FormalTemplate";
 
 interface LineItem {
   id?: string;
@@ -52,6 +56,7 @@ export default function QuotationBuilder() {
   const [createdAt, setCreatedAt] = useState("");
   const [showPrintPreview, setShowPrintPreview] = useState(false);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<"formal" | "creative" | "modern">("formal");
 
   const subtotal = items.reduce((s, i) => s + i.amount, 0);
   const cgstAmount = (subtotal - discount) * (cgstPercentage / 100);
@@ -97,20 +102,21 @@ export default function QuotationBuilder() {
   const addItem = () => setItems([...items, { description: "", quantity: 1, unit: "nos", rate: 0, amount: 0 }]);
   const removeItem = (index: number) => setItems(items.filter((_, i) => i !== index));
 
-  const handleDownloadPDF = () => {
+  const handleOpenPreview = () => {
     if (!quotationNumber || items.length === 0 || !title) {
       toast({ title: "Error", description: "Please ensure quotation data is loaded", variant: "destructive" });
       return;
     }
-
-    setIsGeneratingPdf(true);
     setShowPrintPreview(true);
+  };
 
-    setTimeout(() => {
+  const generatePDF = (action: 'download' | 'share' = 'download') => {
+    setIsGeneratingPdf(true);
+
+    setTimeout(async () => {
       const element = document.getElementById('quotation-print-content');
       if (!element) {
         toast({ title: "Error", description: "Could not find print content", variant: "destructive" });
-        setShowPrintPreview(false);
         setIsGeneratingPdf(false);
         return;
       }
@@ -132,16 +138,35 @@ export default function QuotationBuilder() {
         }
       };
 
-      html2pdf().set(opt).from(element).save().then(() => {
-        setShowPrintPreview(false);
+      try {
+        if (action === 'share') {
+          if (!navigator.share) {
+            toast({ title: "Sharing not supported", description: "Your browser does not support the Web Share API.", variant: "destructive" });
+            setIsGeneratingPdf(false);
+            return;
+          }
+          const pdfBlob = await html2pdf().set(opt).from(element).outputPdf('blob');
+          const file = new File([pdfBlob], opt.filename, { type: 'application/pdf' });
+
+          await navigator.share({
+            title: `Quotation ${quotationNumber}`,
+            text: `Please find attached quotation ${quotationNumber} from K M Enterprises.`,
+            files: [file]
+          });
+          toast({ title: "Shared successfully!" });
+        } else {
+          await html2pdf().set(opt).from(element).save();
+          toast({ title: "PDF downloaded successfully!" });
+          setShowPrintPreview(false);
+        }
+      } catch (error: any) {
+        if (error.name !== 'AbortError') {
+          console.error('PDF generation error:', error);
+          toast({ title: "Error", description: error.message || "Something went wrong", variant: "destructive" });
+        }
+      } finally {
         setIsGeneratingPdf(false);
-        toast({ title: "PDF downloaded successfully!" });
-      }).catch((error: any) => {
-        console.error('PDF generation error:', error);
-        setShowPrintPreview(false);
-        setIsGeneratingPdf(false);
-        toast({ title: "Error generating PDF", description: error.message, variant: "destructive" });
-      });
+      }
     }, 500);
   };
 
@@ -245,6 +270,28 @@ export default function QuotationBuilder() {
     navigate("/quotations");
   };
 
+  const templateData: TemplateData = {
+    type: 'QUOTATION',
+    documentNumber: quotationNumber || 'DRAFT',
+    title: title,
+    date: createdAt || new Date().toISOString(),
+    clientName: clientName,
+    eventName: eventName,
+    items: items.map((i) => ({ ...i, id: i.id || crypto.randomUUID() })),
+    subtotal,
+    discount,
+    tax: totalGstAmount,
+    cgstPercentage,
+    cgstAmount,
+    sgstPercentage,
+    sgstAmount,
+    igstPercentage,
+    igstAmount,
+    total,
+    notes,
+    terms
+  };
+
   return (
     <>
       {/* Print preview modal - optimized for mobile */}
@@ -276,158 +323,63 @@ export default function QuotationBuilder() {
           )}
 
           <div
-            className="bg-white max-w-[860px] w-full my-8 shadow-2xl"
+            className="bg-white max-w-[860px] w-full my-8 shadow-2xl relative rounded-xl overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="print-formal">
-              <div id="quotation-print-content" className="print-formal-sheet">
-                {/* Watermark Logo */}
-                <img src={logoImg} className="print-formal-watermark" alt="Watermark" />
-
-                <div className="print-formal-header">
-                  <div className="print-formal-logo-container">
-                    <img src={logoImg} className="print-formal-logo" alt="Logo" />
-                  </div>
-                  <div className="print-formal-company">
-                    <div className="name">K M Enterprises</div>
-                    <div className="addr">
-                      #612, Nagendra Nilaya, 8th Main 1st Stage,<br />
-                      Vijayanagar Mysuru
-                    </div>
-                  </div>
-                </div>
-
-                <div className="print-formal-title-container">
-                  <div className="title">QUOTATION</div>
-                </div>
-
-                <div className="print-formal-divider" />
-
-                <div className="print-formal-details-grid">
-                  <div className="item">
-                    <span className="k">Quotation No</span>
-                    <span className="v">{quotationNumber}</span>
-                  </div>
-                  <div className="item">
-                    <span className="k">Date</span>
-                    <span className="v">{createdAt ? formatDate(createdAt) : "—"}</span>
-                  </div>
-                  <div className="item">
-                    <span className="k">GSTIN</span>
-                    <span className="v">29AAXFK3522C1Z6</span>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-8 mb-6 relative z-[1]">
-                  <div>
-                    <div className="text-[10px] font-bold text-black uppercase tracking-wider mb-1">Bill To</div>
-                    <div className="text-sm font-bold text-black">{clientName || "—"}</div>
-                  </div>
-                  <div>
-                    <div className="text-[10px] font-bold text-black uppercase tracking-wider mb-1">Event</div>
-                    <div className="text-sm font-bold text-black">{eventName || "—"}</div>
-                  </div>
-                </div>
-
-                <div className="print-formal-section">
-                  <div className="hd">Description of Services</div>
-                  <table className="print-formal-table">
-                    <thead>
-                      <tr>
-                        <th style={{ width: '40px' }}>#</th>
-                        <th>Description</th>
-                        <th className="num" style={{ width: '60px' }}>Qty</th>
-                        <th style={{ width: '80px' }}>Unit</th>
-                        <th className="num" style={{ width: '100px' }}>Rate</th>
-                        <th className="num" style={{ width: '120px' }}>Amount</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {items.map((item, i) => (
-                        <tr key={i}>
-                          <td>{i + 1}</td>
-                          <td>{item.description}</td>
-                          <td className="num">{item.quantity}</td>
-                          <td>{item.unit}</td>
-                          <td className="num">{formatCurrency(item.rate)}</td>
-                          <td className="num">{formatCurrency(item.amount)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                <div className="print-formal-summary">
-                  <div />
-                  <div className="print-formal-totals">
-                    <div className="print-formal-total-row">
-                      <span className="k">Subtotal</span>
-                      <span>{formatCurrency(subtotal)}</span>
-                    </div>
-                    <div className="print-formal-total-row">
-                      <span className="k">Discount</span>
-                      <span>{formatCurrency(discount)}</span>
-                    </div>
-                    {cgstPercentage > 0 && (
-                      <div className="print-formal-total-row">
-                        <span className="k">CGST ({cgstPercentage}%)</span>
-                        <span>{formatCurrency(cgstAmount)}</span>
-                      </div>
-                    )}
-                    {sgstPercentage > 0 && (
-                      <div className="print-formal-total-row">
-                        <span className="k">SGST ({sgstPercentage}%)</span>
-                        <span>{formatCurrency(sgstAmount)}</span>
-                      </div>
-                    )}
-                    {igstPercentage > 0 && (
-                      <div className="print-formal-total-row">
-                        <span className="k">IGST ({igstPercentage}%)</span>
-                        <span>{formatCurrency(igstAmount)}</span>
-                      </div>
-                    )}
-                    <div className="print-formal-total-row grand">
-                      <span>Total Amount</span>
-                      <span>{formatCurrency(total)}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-8">
-                  {notes && (
-                    <div className="print-formal-section">
-                      <div className="hd">Notes</div>
-                      <div style={{ fontSize: '11px', color: '#000000', fontWeight: 500 }}>{notes}</div>
-                    </div>
-                  )}
-                  <div className="print-formal-section">
-                    <div className="hd">Terms & Conditions</div>
-                    <div style={{ fontSize: '11px', color: '#000000', fontWeight: 500 }}>{terms}</div>
-                  </div>
-                </div>
-
-                <div className="print-formal-thanks-container">
-                  <div className="print-formal-thanks">
-                    Thank you for your business.
-                  </div>
-                </div>
-
-                <div className="print-formal-footer">
-                  <div className="print-formal-left-col">
-                    <div className="print-formal-bank">
-                      <div className="hd-sub">Bank Details</div>
-                      <div className="row"><span className="k">Account Name:</span> K M Enterprises</div>
-                      <div className="row"><span className="k">Account No:</span> 50200064343340</div>
-                      <div className="row"><span className="k">IFSC:</span> HDFC0000065</div>
-                      <div className="row"><span className="k">Branch:</span> HDFC Bank, Saraswathipuram</div>
-                    </div>
-                  </div>
-                  <div className="print-formal-sign">
-                    <div className="line" />
-                    <div className="role">Authorized Signatory</div>
-                  </div>
-                </div>
+            {/* Template Selector UI */}
+            <div className="flex justify-between items-center p-4 border-b border-border bg-muted/30 no-print">
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setSelectedTemplate("formal")}
+                  className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${selectedTemplate === "formal" ? "bg-primary text-primary-foreground" : "bg-white hover:bg-muted"}`}
+                >
+                  Formal
+                </button>
+                <button
+                  onClick={() => setSelectedTemplate("creative")}
+                  className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${selectedTemplate === "creative" ? "bg-primary text-primary-foreground" : "bg-white hover:bg-muted"}`}
+                >
+                  Creative
+                </button>
+                <button
+                  onClick={() => setSelectedTemplate("modern")}
+                  className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${selectedTemplate === "modern" ? "bg-primary text-primary-foreground" : "bg-white hover:bg-muted"}`}
+                >
+                  Modern
+                </button>
               </div>
+
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => setShowPrintPreview(false)}>
+                  Close
+                </Button>
+                {navigator.share && (
+                  <Button onClick={() => generatePDF('share')} disabled={isGeneratingPdf} variant="outline" className="text-foreground border-border hover:bg-muted/50 hidden sm:flex">
+                    <Share2 className="h-4 w-4 mr-2" />
+                    Share
+                  </Button>
+                )}
+                <Button onClick={() => generatePDF('download')} disabled={isGeneratingPdf} className="gold-gradient text-primary-foreground hidden sm:flex">
+                  <Download className="h-4 w-4 mr-2" />
+                  {isGeneratingPdf ? 'Generating...' : 'Download PDF'}
+                </Button>
+
+                {/* Mobile Icon Buttons */}
+                {navigator.share && (
+                  <Button onClick={() => generatePDF('share')} disabled={isGeneratingPdf} variant="outline" size="icon" className="sm:hidden text-foreground">
+                    <Share2 className="h-4 w-4" />
+                  </Button>
+                )}
+                <Button onClick={() => generatePDF('download')} disabled={isGeneratingPdf} size="icon" className="gold-gradient text-primary-foreground sm:hidden">
+                  <Download className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+
+            <div id="quotation-print-content">
+              {selectedTemplate === "formal" && <FormalTemplate data={templateData} />}
+              {selectedTemplate === "creative" && <CreativeTemplate data={templateData} />}
+              {selectedTemplate === "modern" && <ModernTemplate data={templateData} />}
             </div>
           </div>
         </div>
@@ -443,23 +395,13 @@ export default function QuotationBuilder() {
               isEdit ? (
                 <div className="flex gap-2">
                   <Button
-                    onClick={() => setShowPrintPreview(true)}
-                    variant="ghost"
-                    size="sm"
-                    className="text-muted-foreground hover:text-foreground"
-                  >
-                    <Eye className="h-4 w-4 sm:mr-2" />
-                    <span className="hidden sm:inline">Preview</span>
-                  </Button>
-                  <Button
-                    onClick={handleDownloadPDF}
+                    onClick={handleOpenPreview}
                     variant="outline"
                     size="sm"
                     className="border-border text-foreground hover:bg-secondary"
-                    disabled={isGeneratingPdf}
                   >
                     <Download className="h-4 w-4 sm:mr-2" />
-                    <span className="hidden sm:inline">Download PDF</span>
+                    <span className="hidden sm:inline">Preview & Download</span>
                   </Button>
                 </div>
               ) : undefined
@@ -825,12 +767,11 @@ export default function QuotationBuilder() {
             <div className="flex gap-2">
               {isEdit && (
                 <Button
-                  onClick={handleDownloadPDF}
+                  onClick={handleOpenPreview}
                   variant="outline"
                   className="flex-1 h-12 border-border"
-                  disabled={isGeneratingPdf}
                 >
-                  <Download className="h-4 w-4 mr-2" />PDF
+                  <Download className="h-4 w-4 mr-2" />Preview & Download
                 </Button>
               )}
               <Button

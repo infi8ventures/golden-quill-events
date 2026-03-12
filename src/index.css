@@ -1095,6 +1095,32 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+.print-creative-sheet {
+  position: relative;
+  width: 794px;
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box;
+  background: #ffffff;
+  overflow: hidden;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.print-modern-sheet {
+  position: relative;
+  width: 794px;
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box;
+  background: #ffffff;
+  overflow: hidden;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
 .print-formal-sheet * {
   color: #000000 !important;
   border-color: #000000 !important;

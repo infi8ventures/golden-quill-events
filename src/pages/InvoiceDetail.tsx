@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { Plus, Download, Edit2, Check, X } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Download, Printer, CircleDollarSign, Edit2, Share2, Plus, Check, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { formatCurrency, formatDate } from "@/lib/supabase-helpers";
@@ -14,7 +14,11 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import logoImg from "@/assets/KM_logo.png";
+import logoImg from "@/assets/KM_Logo_Grey.png";
+import { FormalTemplate } from "@/components/templates/FormalTemplate";
+import { CreativeTemplate } from "@/components/templates/CreativeTemplate";
+import { ModernTemplate } from "@/components/templates/ModernTemplate";
+import type { TemplateData } from "@/components/templates/FormalTemplate";
 
 interface Invoice {
   id: string; invoice_number: string; title: string; subtotal: number; gst_percentage: number;
@@ -47,6 +51,8 @@ export default function InvoiceDetail() {
   const [payRef, setPayRef] = useState("");
 
   const [showPrintPreview, setShowPrintPreview] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<"formal" | "creative" | "modern">("formal");
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
   const [isEditingNumber, setIsEditingNumber] = useState(false);
   const [editInvoiceNumber, setEditInvoiceNumber] = useState("");
@@ -125,21 +131,22 @@ export default function InvoiceDetail() {
     fetchData();
   };
 
-  const handleDownloadPDF = () => {
-    if (!invoice || !invoice.invoice_number || items.length === 0) {
-      toast({ title: "Error", description: "Please ensure invoice data is loaded", variant: "destructive" });
+  const handleOpenPreview = () => {
+    if (!invoice || !invoice.invoice_number) {
+      toast({ title: "Error", description: "Invoice data has not loaded yet. Please wait.", variant: "destructive" });
       return;
     }
-
-    // Show preview first
     setShowPrintPreview(true);
+  };
 
-    // Generate PDF after a short delay to ensure rendering
-    setTimeout(() => {
+  const generatePDF = (action: 'download' | 'share' = 'download') => {
+    setIsGeneratingPdf(true);
+
+    setTimeout(async () => {
       const element = document.getElementById('invoice-print-content');
       if (!element) {
         toast({ title: "Error", description: "Could not find print content", variant: "destructive" });
-        setShowPrintPreview(false);
+        setIsGeneratingPdf(false);
         return;
       }
 
@@ -160,14 +167,35 @@ export default function InvoiceDetail() {
         }
       };
 
-      html2pdf().set(opt).from(element).save().then(() => {
-        setShowPrintPreview(false);
-        toast({ title: "PDF downloaded successfully!" });
-      }).catch((error: any) => {
-        console.error('PDF generation error:', error);
-        setShowPrintPreview(false);
-        toast({ title: "Error generating PDF", description: error.message, variant: "destructive" });
-      });
+      try {
+        if (action === 'share') {
+          if (!navigator.share) {
+            toast({ title: "Sharing not supported", description: "Your browser does not support the Web Share API.", variant: "destructive" });
+            setIsGeneratingPdf(false);
+            return;
+          }
+          const pdfBlob = await html2pdf().set(opt).from(element).outputPdf('blob');
+          const file = new File([pdfBlob], opt.filename, { type: 'application/pdf' });
+
+          await navigator.share({
+            title: `Invoice ${invoice.invoice_number}`,
+            text: `Please find attached invoice ${invoice.invoice_number} from K M Enterprises.`,
+            files: [file]
+          });
+          toast({ title: "Shared successfully!" });
+        } else {
+          await html2pdf().set(opt).from(element).save();
+          toast({ title: "PDF downloaded successfully!" });
+          setShowPrintPreview(false);
+        }
+      } catch (error: any) {
+        if (error.name !== 'AbortError') {
+          console.error('PDF generation error:', error);
+          toast({ title: "Error", description: error.message || "Something went wrong", variant: "destructive" });
+        }
+      } finally {
+        setIsGeneratingPdf(false);
+      }
     }, 500);
   };
 
@@ -175,182 +203,144 @@ export default function InvoiceDetail() {
 
   return (
     <>
-      {/* Print-only view - shown in dialog during PDF generation */}
+      {/* Print preview modal */}
       {showPrintPreview && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.8)',
-          zIndex: 9999,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          overflow: 'auto'
-        }}>
-          <div className="bg-white max-w-[860px] m-4 shadow-2xl">
-            <div className="print-formal">
-              <div id="invoice-print-content" className="print-formal-sheet">
-                {/* Watermark Logo */}
-                <img src={logoImg} className="print-formal-watermark" alt="Watermark" />
+        <div
+          className="fixed inset-0 bg-black/80 z-[9999] flex items-start justify-center overflow-auto p-2 sm:p-4"
+          onClick={() => !isGeneratingPdf && setShowPrintPreview(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Invoice Preview"
+        >
+          {/* Loading indicator */}
+          {isGeneratingPdf && (
+            <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[10000] bg-primary text-primary-foreground px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2">
+              <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              Generating PDF...
+            </div>
+          )}
 
-                <div className="print-formal-header">
-                  <div className="print-formal-logo-container">
-                    <img src={logoImg} className="print-formal-logo" alt="Logo" />
-                  </div>
-                  <div className="print-formal-company">
-                    <div className="name">K M Enterprises</div>
-                    <div className="addr">#612, Nagendra Nilaya, 8th Main 1st Stage,<br />Vijayanagar Mysuru</div>
-                  </div>
-                </div>
-
-                <div className="print-formal-title-container">
-                  <div className="title">INVOICE</div>
-                </div>
-
-                <div className="print-formal-divider" />
-
-                <div className="print-formal-details-grid">
-                  <div className="item">
-                    <span className="k">Invoice No</span>
-                    <span className="v">{invoice.invoice_number}</span>
-                  </div>
-                  <div className="item">
-                    <span className="k">Date</span>
-                    <span className="v">{formatDate(invoice.created_at)}</span>
-                  </div>
-                  <div className="item">
-                    <span className="k">GSTIN</span>
-                    <span className="v">29AAXFK3522C1Z6</span>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-8 mb-6 relative z-[1]">
-                  <div>
-                    <div className="text-[10px] font-bold text-black uppercase tracking-wider mb-1">Bill To</div>
-                    <div className="text-sm font-bold text-black">{invoice.client_name || invoice.clients?.name || "—"}</div>
-                    {(invoice.clients?.company && !invoice.client_name) && <div className="text-xs text-black">{invoice.clients.company}</div>}
-                  </div>
-                  <div>
-                    <div className="text-[10px] font-bold text-black uppercase tracking-wider mb-1">Event</div>
-                    <div className="text-sm font-bold text-black">{invoice.event_name || "—"}</div>
-                  </div>
-                </div>
-
-
-                <div className="print-formal-section">
-                  <div className="hd">Description of Services</div>
-                  <table className="print-formal-table">
-                    <thead>
-                      <tr>
-                        <th style={{ width: '40px' }}>#</th>
-                        <th>Description</th>
-                        <th className="num" style={{ width: '60px' }}>Qty</th>
-                        <th style={{ width: '60px' }}>Unit</th>
-                        <th className="num" style={{ width: '100px' }}>Rate</th>
-                        <th className="num" style={{ width: '120px' }}>Amount</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {items.map((item, i) => (
-                        <tr key={i}>
-                          <td>{i + 1}</td>
-                          <td>{item.description}</td>
-                          <td className="num">{item.quantity}</td>
-                          <td>{item.unit}</td>
-                          <td className="num">{formatCurrency(item.rate)}</td>
-                          <td className="num">{formatCurrency(item.amount)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                <div className="print-formal-summary">
-                  <div />
-                  <div className="print-formal-totals">
-                    <div className="print-formal-total-row">
-                      <span className="k">Subtotal</span>
-                      <span>{formatCurrency(Number(invoice.subtotal))}</span>
-                    </div>
-                    {Number(invoice.discount) > 0 && (
-                      <div className="print-formal-total-row">
-                        <span className="k">Discount</span>
-                        <span>-{formatCurrency(Number(invoice.discount))}</span>
-                      </div>
-                    )}
-                    {Number(invoice.cgst_percentage) > 0 && (
-                      <div className="print-formal-total-row">
-                        <span className="k">CGST ({invoice.cgst_percentage}%)</span>
-                        <span>{formatCurrency((Number(invoice.subtotal) - Number(invoice.discount)) * (Number(invoice.cgst_percentage) / 100))}</span>
-                      </div>
-                    )}
-                    {Number(invoice.sgst_percentage) > 0 && (
-                      <div className="print-formal-total-row">
-                        <span className="k">SGST ({invoice.sgst_percentage}%)</span>
-                        <span>{formatCurrency((Number(invoice.subtotal) - Number(invoice.discount)) * (Number(invoice.sgst_percentage) / 100))}</span>
-                      </div>
-                    )}
-                    {Number(invoice.igst_percentage) > 0 && (
-                      <div className="print-formal-total-row">
-                        <span className="k">IGST ({invoice.igst_percentage}%)</span>
-                        <span>{formatCurrency((Number(invoice.subtotal) - Number(invoice.discount)) * (Number(invoice.igst_percentage) / 100))}</span>
-                      </div>
-                    )}
-                    <div className="print-formal-total-row grand">
-                      <span>Total Amount</span>
-                      <span>{formatCurrency(Number(invoice.total))}</span>
-                    </div>
-                    <div className="print-formal-total-row" style={{ marginTop: '4px', fontWeight: 600 }}>
-                      <span className="k">Amount Paid</span>
-                      <span>{formatCurrency(Number(invoice.amount_paid) || 0)}</span>
-                    </div>
-                    <div className="print-formal-total-row" style={{ fontWeight: 700 }}>
-                      <span className="k">Balance Due</span>
-                      <span>{formatCurrency(Number(invoice.balance_due))}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-8">
-                  {invoice.notes && (
-                    <div className="print-formal-section">
-                      <div className="hd">Notes</div>
-                      <div style={{ fontSize: '11px', color: '#000000', fontWeight: 500 }}>{invoice.notes}</div>
-                    </div>
-                  )}
-                  <div className="print-formal-section">
-                    <div className="hd">Terms & Conditions</div>
-                    <div style={{ fontSize: '11px', color: '#000000', lineHeight: '1.5', fontWeight: 500 }}>
-                      {invoice.terms || "Payment within 30 days of invoice date."}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="print-formal-thanks-container">
-                  <div className="print-formal-thanks">
-                    Thank you for your business.
-                  </div>
-                </div>
-
-                <div className="print-formal-footer">
-                  <div className="print-formal-left-col">
-                    <div className="print-formal-bank">
-                      <div className="hd-sub">Bank Details</div>
-                      <div className="row"><span className="k">Account Name:</span> K M Enterprises</div>
-                      <div className="row"><span className="k">Account No:</span> 50200064343340</div>
-                      <div className="row"><span className="k">IFSC:</span> HDFC0000065</div>
-                      <div className="row"><span className="k">Branch:</span> HDFC Bank, Saraswathipuram</div>
-                    </div>
-                  </div>
-                  <div className="print-formal-sign">
-                    <div className="line" />
-                    <div className="role">Authorized Signatory</div>
-                  </div>
-                </div>
+          <div
+            className="bg-white max-w-[860px] w-full my-8 shadow-2xl relative rounded-xl overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Sticky Control Bar */}
+            <div className="flex justify-between items-center p-4 border-b border-border bg-muted/30 no-print rounded-t-xl">
+              <div className="flex gap-2 flex-wrap">
+                <button
+                  onClick={() => setSelectedTemplate("formal")}
+                  className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${selectedTemplate === "formal" ? "bg-primary text-primary-foreground" : "bg-white hover:bg-muted border border-border"}`}
+                >
+                  Formal
+                </button>
+                <button
+                  onClick={() => setSelectedTemplate("creative")}
+                  className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${selectedTemplate === "creative" ? "bg-primary text-primary-foreground" : "bg-white hover:bg-muted border border-border"}`}
+                >
+                  Creative
+                </button>
+                <button
+                  onClick={() => setSelectedTemplate("modern")}
+                  className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${selectedTemplate === "modern" ? "bg-primary text-primary-foreground" : "bg-white hover:bg-muted border border-border"}`}
+                >
+                  Modern
+                </button>
               </div>
+
+              <div className="flex gap-2 flex-shrink-0">
+                <Button variant="outline" onClick={() => setShowPrintPreview(false)}>
+                  Close
+                </Button>
+                {navigator.share && (
+                  <Button onClick={() => generatePDF('share')} disabled={isGeneratingPdf} variant="outline" className="text-foreground">
+                    <Share2 className="h-4 w-4 mr-2" />
+                    Share
+                  </Button>
+                )}
+                <Button onClick={() => generatePDF('download')} disabled={isGeneratingPdf} className="gold-gradient text-primary-foreground">
+                  <Download className="h-4 w-4 mr-2" />
+                  {isGeneratingPdf ? 'Generating...' : 'Download PDF'}
+                </Button>
+              </div>
+            </div>
+
+            {/* Template content */}
+            <div id="invoice-print-content">
+              {selectedTemplate === "formal" && (
+                <FormalTemplate
+                  data={{
+                    type: 'INVOICE',
+                    documentNumber: invoice.invoice_number || 'DRAFT',
+                    title: invoice.title || '',
+                    date: invoice.created_at || new Date().toISOString(),
+                    clientName: invoice.client_name || '',
+                    eventName: invoice.event_name || '',
+                    items: items.map((i) => ({ ...i, id: (i as any).id || crypto.randomUUID(), description: i.description || '', quantity: i.quantity || 1, rate: i.rate || 0, amount: i.amount || 0 })) || [],
+                    subtotal: invoice.subtotal || 0,
+                    discount: invoice.discount || 0,
+                    tax: invoice.gst_amount || 0,
+                    cgstPercentage: invoice.cgst_percentage || 0,
+                    cgstAmount: (invoice.subtotal - invoice.discount) * ((invoice.cgst_percentage || 0) / 100),
+                    sgstPercentage: invoice.sgst_percentage || 0,
+                    sgstAmount: (invoice.subtotal - invoice.discount) * ((invoice.sgst_percentage || 0) / 100),
+                    igstPercentage: invoice.igst_percentage || 0,
+                    igstAmount: (invoice.subtotal - invoice.discount) * ((invoice.igst_percentage || 0) / 100),
+                    total: invoice.total || 0,
+                    notes: invoice.notes || '',
+                    terms: invoice.terms || ''
+                  }}
+                />
+              )}
+              {selectedTemplate === "creative" && (
+                <CreativeTemplate
+                  data={{
+                    type: 'INVOICE',
+                    documentNumber: invoice.invoice_number || 'DRAFT',
+                    title: invoice.title || '',
+                    date: invoice.created_at || new Date().toISOString(),
+                    clientName: invoice.client_name || '',
+                    eventName: invoice.event_name || '',
+                    items: items.map((i) => ({ ...i, id: (i as any).id || crypto.randomUUID(), description: i.description || '', quantity: i.quantity || 1, rate: i.rate || 0, amount: i.amount || 0 })) || [],
+                    subtotal: invoice.subtotal || 0,
+                    discount: invoice.discount || 0,
+                    tax: invoice.gst_amount || 0,
+                    cgstPercentage: invoice.cgst_percentage || 0,
+                    cgstAmount: (invoice.subtotal - invoice.discount) * ((invoice.cgst_percentage || 0) / 100),
+                    sgstPercentage: invoice.sgst_percentage || 0,
+                    sgstAmount: (invoice.subtotal - invoice.discount) * ((invoice.sgst_percentage || 0) / 100),
+                    igstPercentage: invoice.igst_percentage || 0,
+                    igstAmount: (invoice.subtotal - invoice.discount) * ((invoice.igst_percentage || 0) / 100),
+                    total: invoice.total || 0,
+                    notes: invoice.notes || '',
+                    terms: invoice.terms || ''
+                  }}
+                />
+              )}
+              {selectedTemplate === "modern" && (
+                <ModernTemplate
+                  data={{
+                    type: 'INVOICE',
+                    documentNumber: invoice.invoice_number || 'DRAFT',
+                    title: invoice.title || '',
+                    date: invoice.created_at || new Date().toISOString(),
+                    clientName: invoice.client_name || '',
+                    eventName: invoice.event_name || '',
+                    items: items.map((i) => ({ ...i, id: (i as any).id || crypto.randomUUID(), description: i.description || '', quantity: i.quantity || 1, rate: i.rate || 0, amount: i.amount || 0 })) || [],
+                    subtotal: invoice.subtotal || 0,
+                    discount: invoice.discount || 0,
+                    tax: invoice.gst_amount || 0,
+                    cgstPercentage: invoice.cgst_percentage || 0,
+                    cgstAmount: (invoice.subtotal - invoice.discount) * ((invoice.cgst_percentage || 0) / 100),
+                    sgstPercentage: invoice.sgst_percentage || 0,
+                    sgstAmount: (invoice.subtotal - invoice.discount) * ((invoice.sgst_percentage || 0) / 100),
+                    igstPercentage: invoice.igst_percentage || 0,
+                    igstAmount: (invoice.subtotal - invoice.discount) * ((invoice.igst_percentage || 0) / 100),
+                    total: invoice.total || 0,
+                    notes: invoice.notes || '',
+                    terms: invoice.terms || ''
+                  }}
+                />
+              )}
             </div>
           </div>
         </div>
@@ -408,8 +398,8 @@ export default function InvoiceDetail() {
                     </div>
                   </DialogContent>
                 </Dialog>
-                <Button onClick={handleDownloadPDF} variant="outline" className="border-border text-foreground hover:bg-secondary">
-                  <Download className="h-4 w-4 mr-2" />Download PDF
+                <Button onClick={handleOpenPreview} variant="outline" className="border-border text-foreground hover:bg-secondary">
+                  <Download className="h-4 w-4 mr-2" />Preview & Download
                 </Button>
               </div>
             }
@@ -503,3 +493,4 @@ export default function InvoiceDetail() {
     </>
   );
 }
+
