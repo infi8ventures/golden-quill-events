@@ -4,7 +4,8 @@ import { ArrowLeft, CheckCircle2, Download, Printer, CircleDollarSign, Edit2, Sh
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { formatCurrency, formatDate } from "@/lib/supabase-helpers";
-import html2pdf from "html2pdf.js";
+import html2canvas from "html2canvas";
+import { jsPDF } from "jspdf";
 import { AppLayout } from "@/components/AppLayout";
 import { PageHeader } from "@/components/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -150,32 +151,37 @@ export default function InvoiceDetail() {
         return;
       }
 
-      const opt = {
-        margin: 0,
-        filename: `Invoice_${invoice.invoice_number}.pdf`,
-        image: { type: 'png' as const },
-        html2canvas: {
-          scale: 3,
-          logging: false,
-          backgroundColor: '#ffffff',
-          useCORS: true
-        },
-        jsPDF: {
-          unit: 'in' as const,
-          format: 'a4' as const,
-          orientation: 'portrait' as const
-        }
-      };
-
       try {
+        const targetElement = (element.firstElementChild || element) as HTMLElement;
+        const canvas = await html2canvas(targetElement, {
+          scale: 3,
+          backgroundColor: '#ffffff',
+          useCORS: true,
+          logging: false
+        });
+        
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF({
+          orientation: 'portrait',
+          unit: 'mm',
+          format: 'a4'
+        });
+        
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+        
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+        const filename = `Invoice_${invoice.invoice_number}.pdf`;
+
         if (action === 'share') {
           if (!navigator.share) {
             toast({ title: "Sharing not supported", description: "Your browser does not support the Web Share API.", variant: "destructive" });
             setIsGeneratingPdf(false);
             return;
           }
-          const pdfBlob = await html2pdf().set(opt).from(element).outputPdf('blob');
-          const file = new File([pdfBlob], opt.filename, { type: 'application/pdf' });
+          
+          const pdfBlob = pdf.output('blob');
+          const file = new File([pdfBlob], filename, { type: 'application/pdf' });
 
           await navigator.share({
             title: `Invoice ${invoice.invoice_number}`,
@@ -184,7 +190,7 @@ export default function InvoiceDetail() {
           });
           toast({ title: "Shared successfully!" });
         } else {
-          await html2pdf().set(opt).from(element).save();
+          pdf.save(filename);
           toast({ title: "PDF downloaded successfully!" });
           setShowPrintPreview(false);
         }
