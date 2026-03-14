@@ -346,9 +346,6 @@ export function CreativeTemplate({ data, id = "print-content" }: CreativeTemplat
                 width: '100%',
                 background: C.tableHeaderBg,
                 height: '40px',
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
                 zIndex: 40
             }}>
                 <p style={{
@@ -356,9 +353,10 @@ export function CreativeTemplate({ data, id = "print-content" }: CreativeTemplat
                     fontSize: '14px',
                     fontWeight: 600,
                     margin: 0,
+                    lineHeight: '40px',
+                    textAlign: 'center',
                     letterSpacing: '0.05em',
                     fontFamily: 'Georgia, serif',
-                    textAlign: 'center'
                 }}>
                     #612, Nagendra Nilaya, 8th Main 1st Stage, Vijayanagar Mysuru
                 </p>

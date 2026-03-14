@@ -6,7 +6,7 @@ import { VitePWA } from "vite-plugin-pwa";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
-  base: "/golden-quill-events/",
+  base: process.env.VITE_BASE_PATH || "/",
   server: {
     host: "::",
     port: 8080,
@@ -32,13 +32,13 @@ export default defineConfig(({ mode }) => ({
         start_url: "/golden-quill-events/",
         icons: [
           {
-            src: "/icon.ico",
+            src: "icon.ico",
             sizes: "any",
             type: "image/svg+xml",
             purpose: "any"
           },
           {
-            src: "/icon.ico",
+            src: "icon.ico",
             sizes: "512x512",
             type: "image/svg+xml",
             purpose: "maskable"
