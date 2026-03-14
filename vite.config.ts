@@ -28,8 +28,8 @@ export default defineConfig(({ mode }) => ({
         background_color: "#0a0a0a",
         display: "standalone",
         orientation: "portrait-primary",
-        scope: "/golden-quill-events/",
-        start_url: "/golden-quill-events/",
+        scope: process.env.VITE_BASE_PATH || "/",
+        start_url: process.env.VITE_BASE_PATH || "/",
         icons: [
           {
             src: "icon.ico",
