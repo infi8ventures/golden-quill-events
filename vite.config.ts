@@ -7,8 +7,7 @@ import { VitePWA } from "vite-plugin-pwa";
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
-  const isVercel = process.env.VERCEL === "1" || !!process.env.VERCEL;
-  const base = isVercel ? "/" : (env.VITE_BASE_PATH || "/");
+  const base = (env.GITHUB_ACTIONS === 'true' || env.VITE_BASE_PATH) ? (env.VITE_BASE_PATH || "/golden-quill-events/") : "/";
 
   return {
     base,
