@@ -168,9 +168,10 @@ export default function InvoiceDetail() {
         });
         
         const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = pdf.internal.pageSize.getHeight();
+        const imgProps = pdf.getImageProperties(imgData);
+        const imgHeight = (imgProps.height * pdfWidth) / imgProps.width;
         
-        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, imgHeight);
         const filename = `Invoice_${invoice.invoice_number}.pdf`;
 
         if (action === 'share') {

@@ -55,18 +55,20 @@ export function CreativeTemplate({ data, id = "print-content" }: CreativeTemplat
             }} />
 
             {/* ══ MASSIVE CENTER WATERMARK (CLEAN) ══ */}
-            <div style={{
-                position: 'absolute',
-                inset: 0,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                zIndex: 1,
-                pointerEvents: 'none',
-                transform: 'rotate(-25deg)' // Tilt as requested
-            }}>
-                <img src={kmLogo} alt="" style={{ width: '65%', height: 'auto', objectFit: 'contain', opacity: 0.10, filter: C.logoFilter }} />
-            </div>
+            {data.logoDataUrl && (
+                <div style={{
+                    position: 'absolute',
+                    inset: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 1,
+                    pointerEvents: 'none',
+                    transform: 'rotate(-25deg)' // Tilt as requested
+                }}>
+                    <img src={data.logoDataUrl} alt="" style={{ width: '65%', height: 'auto', objectFit: 'contain', opacity: 0.10, filter: C.logoFilter }} />
+                </div>
+            )}
 
             {/* ══ CORNER ASSETS (CLEAN) ══ */}
             {/* Top Left */}
@@ -82,30 +84,62 @@ export function CreativeTemplate({ data, id = "print-content" }: CreativeTemplat
                 <img src={floralCorner} alt="" style={{ width: '100%', height: 'auto' }} />
             </div> */}
             {/* Bottom Right */}
-            {/* <div style={{ position: 'absolute', bottom: '-20px', right: '-40px', width: '300px', height: 'auto', zIndex: 10, pointerEvents: 'none', transform: 'scale(-1)' }}>
+            <div style={{ position: 'absolute', bottom: '-20px', right: '-40px', width: '300px', height: 'auto', zIndex: 10, pointerEvents: 'none', transform: 'scale(-1)' }}>
                 <img src={floralCorner} alt="" style={{ width: '100%', height: 'auto' }} />
-            </div> */}
+            </div>
 
             {/* ══ MAIN CONTENT ══ */}
             <div style={{ position: 'relative', zIndex: 20, padding: '40px 52px', flex: 1, display: 'flex', flexDirection: 'column' }}>
-                {/* ── HEADER ── */}
-                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'center', marginBottom: '12px', minHeight: 'auto' }}>
-                    {/* Center Branding (Logo + Name) */}
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
-                        <img src={kmLogo} alt="Branding Logo" style={{ width: '180px', height: 'auto', marginBottom: '4px' }} />
-                        <h2 style={{
-                            fontFamily: '"Cormorant Garamond", serif',
-                            fontWeight: 700,
-                            textTransform: 'uppercase',
-                            fontSize: '32px',
-                            color: '#d6a44a',
-                            letterSpacing: '0.06em',
-                            margin: 0,
-                            whiteSpace: 'nowrap',
-                            lineHeight: 1
-                        }}>
-                            K M ENTERPRISES
-                        </h2>
+                {/* ── BRANDING ── */}
+                <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1fr 1fr',
+                    alignItems: 'center',
+                    marginBottom: '32px',
+                    position: 'relative',
+                    zIndex: 1,
+                    gap: '16px'
+                }}>
+                    {/* Left Column */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '20px' }}>
+                        {data.logoAlignment === 'left' && data.logoDataUrl && (
+                            <img src={data.logoDataUrl} alt="Branding Logo" style={{ maxWidth: `${180 * ((data.logoSize || 100) / 100)}px`, maxHeight: `${100 * ((data.logoSize || 100) / 100)}px`, height: 'auto', objectFit: 'contain' }} />
+                        )}
+                        {data.companyAlignment === 'left' && (
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', textAlign: 'left' }}>
+                                {data.companyDetails?.name && <h2 style={{ fontFamily: '"Cormorant Garamond", serif', fontWeight: 700, textTransform: 'uppercase', fontSize: '32px', color: '#d6a44a', letterSpacing: '0.06em', margin: 0, whiteSpace: 'nowrap', lineHeight: 1 }}>{data.companyDetails.name}</h2>}
+                                {data.companyDetails?.address && <p style={{ margin: '8px 0 0', fontSize: '13px', color: '#555', whiteSpace: 'pre-wrap', fontWeight: 500 }}>{data.companyDetails.address}</p>}
+                                {data.companyDetails?.gstin && <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#777', fontWeight: 600 }}>GSTIN: {data.companyDetails.gstin}</p>}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Center Column */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '20px' }}>
+                        {data.logoAlignment === 'center' && data.logoDataUrl && (
+                            <img src={data.logoDataUrl} alt="Branding Logo" style={{ maxWidth: `${180 * ((data.logoSize || 100) / 100)}px`, maxHeight: `${100 * ((data.logoSize || 100) / 100)}px`, height: 'auto', objectFit: 'contain' }} />
+                        )}
+                        {data.companyAlignment === 'center' && (
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+                                {data.companyDetails?.name && <h2 style={{ fontFamily: '"Cormorant Garamond", serif', fontWeight: 700, textTransform: 'uppercase', fontSize: '32px', color: '#d6a44a', letterSpacing: '0.06em', margin: 0, whiteSpace: 'nowrap', lineHeight: 1 }}>{data.companyDetails.name}</h2>}
+                                {data.companyDetails?.address && <p style={{ margin: '8px 0 0', fontSize: '13px', color: '#555', whiteSpace: 'pre-wrap', fontWeight: 500 }}>{data.companyDetails.address}</p>}
+                                {data.companyDetails?.gstin && <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#777', fontWeight: 600 }}>GSTIN: {data.companyDetails.gstin}</p>}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Right Column */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '20px' }}>
+                        {data.logoAlignment === 'right' && data.logoDataUrl && (
+                            <img src={data.logoDataUrl} alt="Branding Logo" style={{ maxWidth: `${180 * ((data.logoSize || 100) / 100)}px`, maxHeight: `${100 * ((data.logoSize || 100) / 100)}px`, height: 'auto', objectFit: 'contain' }} />
+                        )}
+                        {data.companyAlignment === 'right' && (
+                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', textAlign: 'right' }}>
+                                {data.companyDetails?.name && <h2 style={{ fontFamily: '"Cormorant Garamond", serif', fontWeight: 700, textTransform: 'uppercase', fontSize: '32px', color: '#d6a44a', letterSpacing: '0.06em', margin: 0, whiteSpace: 'nowrap', lineHeight: 1 }}>{data.companyDetails.name}</h2>}
+                                {data.companyDetails?.address && <p style={{ margin: '8px 0 0', fontSize: '13px', color: '#555', whiteSpace: 'pre-wrap', fontWeight: 500 }}>{data.companyDetails.address}</p>}
+                                {data.companyDetails?.gstin && <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#777', fontWeight: 600 }}>GSTIN: {data.companyDetails.gstin}</p>}
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -147,21 +181,25 @@ export function CreativeTemplate({ data, id = "print-content" }: CreativeTemplat
                         <span style={{ color: C.gold, fontSize: '12px', lineHeight: 1 }}>◆</span>
                         <span style={{ width: '1px', height: '18px', borderLeft: `1.5px dotted ${C.gold}80` }}></span>
                     </div>
-                    <div style={{ flex: 1, paddingLeft: '10px' }}>
-                        <p style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.04em', color: '#333', marginBottom: '4px' }}>GSTIN</p>
-                        <p style={{ fontWeight: 700, color: '#000', fontSize: '15px', margin: 0 }}>29AAXFK3522C1Z6</p>
-                    </div>
+                    {data.companyDetails?.gstin ? (
+                        <div style={{ flex: 1, paddingLeft: '10px' }}>
+                            <p style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.04em', color: '#333', marginBottom: '4px' }}>GSTIN</p>
+                            <p style={{ fontWeight: 700, color: '#000', fontSize: '15px', margin: 0 }}>{data.companyDetails.gstin}</p>
+                        </div>
+                    ) : (
+                        <div style={{ flex: 1, paddingLeft: '10px' }} />
+                    )}
                 </div>
 
                 {/* ── BILL TO / EVENT ── */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}>
-                    <div>
+                <div style={{ display: 'flex', gap: '32px', marginBottom: '24px' }}>
+                    <div style={{ flex: 1 }}>
                         <p style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.08em', color: '#333', textTransform: 'uppercase', marginBottom: '6px' }}>Bill To</p>
-                        <p style={{ fontWeight: 700, fontSize: '18px', color: '#000', margin: 0 }}>{data.clientName || '—'}</p>
+                        <p style={{ fontWeight: 700, fontSize: '18px', color: '#000', margin: 0 }}>{data.clientName || 'Cash Client'}</p>
                     </div>
                     {data.eventName && (
-                        <div>
-                            <p style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.08em', color: '#333', textTransform: 'uppercase', marginBottom: '6px' }}>Event</p>
+                        <div style={{ flex: 1 }}>
+                            <p style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.08em', color: '#333', textTransform: 'uppercase', marginBottom: '6px' }}>Services</p>
                             <p style={{ fontWeight: 700, fontSize: '18px', color: '#000', margin: 0 }}>{data.eventName}</p>
                         </div>
                     )}
@@ -274,43 +312,64 @@ export function CreativeTemplate({ data, id = "print-content" }: CreativeTemplat
                     {/* LEFT COLUMN: Payment Card + Terms */}
                     <div style={{ display: 'flex', flexDirection: 'column', width: '320px' }}>
                         {/* Creative Payment Card Redesign */}
-                        <div style={{
-                            padding: '20px',
-                            background: C.totalsBg,
-                            borderRadius: '16px',
-                            border: `1px solid ${C.totalsSep}40`,
-                            position: 'relative'
-                        }}>
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-                                <span style={{
-                                    fontFamily: '"Georgia,Cormorant Garamond", serif',
-                                    fontSize: '18px',
-                                    fontWeight: 700,
-                                    color: '#000',
-                                    letterSpacing: '0.04em',
-                                    textTransform: 'uppercase'
-                                }}>
-                                    Payment Details
-                                </span>
+                        {data.bankDetails && (data.bankDetails.bankName || data.bankDetails.accountName || data.bankDetails.accountNumber || data.bankDetails.ifscCode || data.bankDetails.branchName) && (
+                            <div style={{
+                                padding: '20px',
+                                background: C.totalsBg,
+                                borderRadius: '16px',
+                                border: `1px solid ${C.totalsSep}40`,
+                                position: 'relative'
+                            }}>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                                    <span style={{
+                                        fontFamily: '"Georgia,Cormorant Garamond", serif',
+                                        fontSize: '18px',
+                                        fontWeight: 700,
+                                        color: '#000',
+                                        letterSpacing: '0.04em',
+                                        textTransform: 'uppercase'
+                                    }}>
+                                        Payment Details
+                                    </span>
+                                </div>
+
+                                <div style={{ display: 'grid', gridTemplateColumns: '90px 1fr', gap: '6px 16px', fontSize: '13px', color: '#333', fontFamily: 'Georgia' }}>
+                                    {data.bankDetails?.bankName && (
+                                        <>
+                                            <span style={{ fontWeight: 600, color: C.darkGold, opacity: 0.8 }}>Bank Name</span>
+                                            <span style={{ fontWeight: 700 }}>{data.bankDetails.bankName}</span>
+                                        </>
+                                    )}
+                                    {data.bankDetails?.accountName && (
+                                        <>
+                                            <span style={{ fontWeight: 600, color: C.darkGold, opacity: 0.8 }}>Account</span>
+                                            <span style={{ fontWeight: 700 }}>{data.bankDetails.accountName}</span>
+                                        </>
+                                    )}
+                                    {data.bankDetails?.accountNumber && (
+                                        <>
+                                            <span style={{ fontWeight: 600, color: C.darkGold, opacity: 0.8 }}>Number</span>
+                                            <span style={{ fontWeight: 700, letterSpacing: '0.05em' }}>{data.bankDetails.accountNumber}</span>
+                                        </>
+                                    )}
+                                    {data.bankDetails?.ifscCode && (
+                                        <>
+                                            <span style={{ fontWeight: 600, color: C.darkGold, opacity: 0.8 }}>IFSC</span>
+                                            <span style={{ fontWeight: 700, letterSpacing: '0.02em' }}>{data.bankDetails.ifscCode}</span>
+                                        </>
+                                    )}
+                                    {data.bankDetails?.branchName && (
+                                        <>
+                                            <span style={{ fontWeight: 600, color: C.darkGold, opacity: 0.8 }}>Branch</span>
+                                            <span style={{ fontWeight: 700 }}>{data.bankDetails.branchName}</span>
+                                        </>
+                                    )}
+                                </div>
+
+                                {/* Corner subtle accent */}
+                                <div style={{ position: 'absolute', bottom: '8px', right: '8px', width: '24px', height: '24px', borderRight: `2px solid ${C.gold}30`, borderBottom: `2px solid ${C.gold}30`, borderRadius: '0 0 8px 0' }} />
                             </div>
-
-                            <div style={{ display: 'grid', gridTemplateColumns: '90px 1fr', gap: '6px 16px', fontSize: '13px', color: '#333', fontFamily: 'Georgia' }}>
-                                <span style={{ fontWeight: 600, color: C.darkGold, opacity: 0.8 }}>Account</span>
-                                <span style={{ fontWeight: 700 }}>K M Enterprises</span>
-
-                                <span style={{ fontWeight: 600, color: C.darkGold, opacity: 0.8 }}>Number</span>
-                                <span style={{ fontWeight: 700, letterSpacing: '0.05em' }}>50200064343340</span>
-
-                                <span style={{ fontWeight: 600, color: C.darkGold, opacity: 0.8 }}>IFSC</span>
-                                <span style={{ fontWeight: 700, letterSpacing: '0.02em' }}>HDFC0000065</span>
-
-                                <span style={{ fontWeight: 600, color: C.darkGold, opacity: 0.8 }}>Branch</span>
-                                <span style={{ fontWeight: 700 }}>HDFC Bank - Saraswathipuram</span>
-                            </div>
-
-                            {/* Corner subtle accent */}
-                            <div style={{ position: 'absolute', bottom: '8px', right: '8px', width: '24px', height: '24px', borderRight: `2px solid ${C.gold}30`, borderBottom: `2px solid ${C.gold}30`, borderRadius: '0 0 8px 0' }} />
-                        </div>
+                        )}
 
                         {/* Moved Terms & Conditions below Bank Details */}
                         <div style={{ marginTop: '16px', padding: '12px 16px', borderTop: `1px dashed ${C.totalsSep}40` }}>
@@ -338,29 +397,35 @@ export function CreativeTemplate({ data, id = "print-content" }: CreativeTemplat
             </div>
 
             {/* ══ FOOTER ══ */}
-            <div style={{
-                position: 'absolute',
-                bottom: 0,
-                left: 0,
-                right: 0,
-                width: '100%',
-                background: C.tableHeaderBg,
-                height: '40px',
-                zIndex: 40
-            }}>
-                <p style={{
-                    color: '#e2ca83ff',
-                    fontSize: '14px',
-                    fontWeight: 600,
-                    margin: 0,
-                    lineHeight: '40px',
-                    textAlign: 'center',
-                    letterSpacing: '0.05em',
-                    fontFamily: 'Georgia, serif',
+            {data.companyDetails?.address && (
+                <div style={{
+                    position: 'absolute',
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    width: '100%',
+                    background: C.tableHeaderBg,
+                    height: '40px',
+                    zIndex: 40
                 }}>
-                    #612, Nagendra Nilaya, 8th Main 1st Stage, Vijayanagar Mysuru
-                </p>
-            </div>
+                    <p style={{
+                        color: '#e2ca83ff',
+                        fontSize: '14px',
+                        fontWeight: 600,
+                        margin: 0,
+                        lineHeight: '40px',
+                        textAlign: 'center',
+                        letterSpacing: '0.05em',
+                        fontFamily: 'Georgia, serif',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        padding: '0 20px'
+                    }}>
+                        {data.companyDetails.address.replace(/\n/g, ', ')}
+                    </p>
+                </div>
+            )}
         </div>
     );
 }

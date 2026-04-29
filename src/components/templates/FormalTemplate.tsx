@@ -32,6 +32,22 @@ export interface TemplateData {
     total: number;
     notes: string;
     terms: string;
+    logoDataUrl?: string | null;
+    companyDetails?: {
+        name: string;
+        address: string;
+        gstin: string;
+    } | null;
+    bankDetails?: {
+        bankName?: string;
+        accountName?: string;
+        accountNumber?: string;
+        ifscCode?: string;
+        branchName?: string;
+    };
+    logoAlignment?: 'left' | 'center' | 'right';
+    companyAlignment?: 'left' | 'center' | 'right';
+    logoSize?: number;
 }
 
 interface FormalTemplateProps {
@@ -44,18 +60,57 @@ export function FormalTemplate({ data, id = "print-content" }: FormalTemplatePro
         <div className="print-formal">
             <div id={id} className="print-formal-sheet">
                 {/* Watermark Logo */}
-                <img src={logoImg} className="print-formal-watermark" alt="Watermark" />
+                {data.logoDataUrl && <img src={data.logoDataUrl} className="print-formal-watermark" alt="Watermark" />}
 
-                <div className="print-formal-header">
-                    <div className="print-formal-logo-container">
-                        <img src={logoImg} className="print-formal-logo" alt="Logo" />
+                <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1fr 1fr',
+                    alignItems: 'center',
+                    paddingBottom: '20px',
+                    position: 'relative',
+                    zIndex: 1,
+                    gap: '16px'
+                }}>
+                    {/* Left Alignments */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: '20px' }}>
+                        {data.logoAlignment === 'left' && data.logoDataUrl && (
+                            <img src={data.logoDataUrl} style={{ maxWidth: `${150 * ((data.logoSize || 100) / 100)}px`, maxHeight: `${80 * ((data.logoSize || 100) / 100)}px`, height: 'auto', objectFit: 'contain' }} alt="Logo" />
+                        )}
+                        {data.companyAlignment === 'left' && (
+                            <div className="print-formal-company" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', textAlign: 'left' }}>
+                                {data.companyDetails?.name && <div className="name" style={{ fontSize: '24px', fontWeight: 700, color: '#000', marginBottom: '4px' }}>{data.companyDetails.name}</div>}
+                                {data.companyDetails?.address && <div className="addr" style={{ fontSize: '12px', color: '#000', lineHeight: 1.4, whiteSpace: 'pre-wrap' }}>{data.companyDetails.address}</div>}
+                                {data.companyDetails?.gstin && <div style={{ fontSize: '12px', color: '#000', marginTop: '4px', fontWeight: 600 }}>GSTIN: {data.companyDetails.gstin}</div>}
+                            </div>
+                        )}
                     </div>
-                    <div className="print-formal-company">
-                        <div className="name">K M Enterprises</div>
-                        <div className="addr">
-                            #612, Nagendra Nilaya, 8th Main 1st Stage,<br />
-                            Vijayanagar Mysuru
-                        </div>
+
+                    {/* Center Alignments */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '20px' }}>
+                        {data.logoAlignment === 'center' && data.logoDataUrl && (
+                            <img src={data.logoDataUrl} style={{ maxWidth: `${150 * ((data.logoSize || 100) / 100)}px`, maxHeight: `${80 * ((data.logoSize || 100) / 100)}px`, height: 'auto', objectFit: 'contain' }} alt="Logo" />
+                        )}
+                        {data.companyAlignment === 'center' && (
+                            <div className="print-formal-company" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+                                {data.companyDetails?.name && <div className="name" style={{ fontSize: '24px', fontWeight: 700, color: '#000', marginBottom: '4px' }}>{data.companyDetails.name}</div>}
+                                {data.companyDetails?.address && <div className="addr" style={{ fontSize: '12px', color: '#000', lineHeight: 1.4, whiteSpace: 'pre-wrap' }}>{data.companyDetails.address}</div>}
+                                {data.companyDetails?.gstin && <div style={{ fontSize: '12px', color: '#000', marginTop: '4px', fontWeight: 600 }}>GSTIN: {data.companyDetails.gstin}</div>}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Right Alignments */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '20px' }}>
+                        {data.logoAlignment === 'right' && data.logoDataUrl && (
+                            <img src={data.logoDataUrl} style={{ maxWidth: `${150 * ((data.logoSize || 100) / 100)}px`, maxHeight: `${80 * ((data.logoSize || 100) / 100)}px`, height: 'auto', objectFit: 'contain' }} alt="Logo" />
+                        )}
+                        {data.companyAlignment === 'right' && (
+                            <div className="print-formal-company" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', textAlign: 'right' }}>
+                                {data.companyDetails?.name && <div className="name" style={{ fontSize: '24px', fontWeight: 700, color: '#000', marginBottom: '4px' }}>{data.companyDetails.name}</div>}
+                                {data.companyDetails?.address && <div className="addr" style={{ fontSize: '12px', color: '#000', lineHeight: 1.4, whiteSpace: 'pre-wrap' }}>{data.companyDetails.address}</div>}
+                                {data.companyDetails?.gstin && <div style={{ fontSize: '12px', color: '#000', marginTop: '4px', fontWeight: 600 }}>GSTIN: {data.companyDetails.gstin}</div>}
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -75,10 +130,12 @@ export function FormalTemplate({ data, id = "print-content" }: FormalTemplatePro
                         <span className="v">{data.date ? formatDate(data.date) : "—"}</span>
                     </div>
                     {/* GST */}
-                    <div className="item">
-                        <span className="k">GSTIN</span>
-                        <span className="v">29AAXFK3522C1Z6</span>
-                    </div>
+                    {data.companyDetails?.gstin && (
+                        <div className="item">
+                            <span className="k">GSTIN</span>
+                            <span className="v">{data.companyDetails.gstin}</span>
+                        </div>
+                    )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-8 mb-6 relative z-[1]">
@@ -87,8 +144,8 @@ export function FormalTemplate({ data, id = "print-content" }: FormalTemplatePro
                         <div className="text-sm font-bold text-black">{data.clientName || "—"}</div>
                     </div>
                     {data.eventName && (
-                        <div>
-                            <div className="text-[10px] font-bold text-black uppercase tracking-wider mb-1">Event</div>
+                        <div className="print-formal-event">
+                            <div className="text-[10px] font-bold text-black uppercase tracking-wider mb-1">Services</div>
                             <div className="text-sm font-bold text-black">{data.eventName}</div>
                         </div>
                     )}
@@ -192,13 +249,26 @@ export function FormalTemplate({ data, id = "print-content" }: FormalTemplatePro
 
                 <div className="print-formal-footer">
                     <div className="print-formal-left-col">
-                        <div className="print-formal-bank">
-                            <div className="hd-sub">Bank Details</div>
-                            <div className="row"><span className="k">Account Name:</span> K M Enterprises</div>
-                            <div className="row"><span className="k">Account No:</span> 50200064343340</div>
-                            <div className="row"><span className="k">IFSC:</span> HDFC0000065</div>
-                            <div className="row"><span className="k">Branch:</span> HDFC Bank, Saraswathipuram</div>
-                        </div>
+                        {data.bankDetails && (data.bankDetails.bankName || data.bankDetails.accountName || data.bankDetails.accountNumber || data.bankDetails.ifscCode || data.bankDetails.branchName) && (
+                            <div className="print-formal-bank">
+                                <div className="hd-sub">Bank Details</div>
+                                {data.bankDetails?.bankName && (
+                                    <div className="row"><span className="k">Bank Name:</span> {data.bankDetails.bankName}</div>
+                                )}
+                                {data.bankDetails?.accountName && (
+                                    <div className="row"><span className="k">Account Name:</span> {data.bankDetails.accountName}</div>
+                                )}
+                                {data.bankDetails?.accountNumber && (
+                                    <div className="row"><span className="k">Account No:</span> {data.bankDetails.accountNumber}</div>
+                                )}
+                                {data.bankDetails?.ifscCode && (
+                                    <div className="row"><span className="k">IFSC:</span> {data.bankDetails.ifscCode}</div>
+                                )}
+                                {data.bankDetails?.branchName && (
+                                    <div className="row"><span className="k">Branch:</span> {data.bankDetails.branchName}</div>
+                                )}
+                            </div>
+                        )}
                     </div>
                     <div className="print-formal-sign">
                         <div style={{ height: '56px', marginBottom: '4px' }} />

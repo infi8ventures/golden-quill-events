@@ -21,13 +21,17 @@ export function ModernTemplate({ data, id = "print-content" }: ModernTemplatePro
                     {/* Header Row */}
                     <div className="flex justify-between items-end mb-16 border-b-4 border-stone-900 pb-8 relative z-10">
                         <div className="flex items-center gap-6">
-                            <div className="bg-stone-900 p-4 rounded-xl shadow-lg">
-                                <img src={logoImg} className="h-20 w-auto object-contain brightness-0 invert" alt="Logo" />
-                            </div>
-                            <div>
-                                <h2 className="text-2xl font-black tracking-tighter text-stone-900">K M Enterprises</h2>
-                                <p className="text-sm font-medium text-stone-500 mt-1">Event Management</p>
-                            </div>
+                            {data.logoDataUrl && (
+                                <div className="bg-stone-900 p-4 rounded-xl shadow-lg">
+                                    <img src={data.logoDataUrl} className="h-20 w-auto object-contain brightness-0 invert" alt="Logo" />
+                                </div>
+                            )}
+                            {data.companyDetails?.name && (
+                                <div>
+                                    <h2 className="text-2xl font-black tracking-tighter text-stone-900">{data.companyDetails.name}</h2>
+                                    <p className="text-sm font-medium text-stone-500 mt-1">Event Management</p>
+                                </div>
+                            )}
                         </div>
 
                         <div className="text-right">
@@ -46,14 +50,21 @@ export function ModernTemplate({ data, id = "print-content" }: ModernTemplatePro
                                 <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">Date Issued</p>
                                 <p className="text-lg font-bold text-stone-900">{data.date ? formatDate(data.date) : "—"}</p>
                             </div>
-                            <div className="space-y-1">
-                                <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">Company Info</p>
-                                <p className="text-xs font-semibold text-stone-600 leading-relaxed">
-                                    #612, Nagendra Nilaya, 8th Main<br />
-                                    1st Stage, Vijayanagar Mysuru<br />
-                                    GSTIN: <span className="text-stone-900">29AAXFK3522C1Z6</span>
-                                </p>
-                            </div>
+                            {data.companyDetails && (data.companyDetails.address || data.companyDetails.gstin) && (
+                                <div className="space-y-1">
+                                    <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest">Company Info</p>
+                                    {data.companyDetails.address && (
+                                        <p className="text-xs font-semibold text-stone-600 leading-relaxed whitespace-pre-wrap">
+                                            {data.companyDetails.address}
+                                        </p>
+                                    )}
+                                    {data.companyDetails.gstin && (
+                                        <p className="text-xs font-semibold text-stone-600 leading-relaxed mt-1">
+                                            GSTIN: <span className="text-stone-900">{data.companyDetails.gstin}</span>
+                                        </p>
+                                    )}
+                                </div>
+                            )}
                         </div>
 
                         {/* Billed To */}
@@ -71,7 +82,7 @@ export function ModernTemplate({ data, id = "print-content" }: ModernTemplatePro
                                 {data.eventName && (
                                     <div className="space-y-2 pl-8 border-l border-stone-700/50">
                                         <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest flex items-center gap-2">
-                                            <span className="w-2 h-2 rounded-full bg-amber-400"></span> For Event
+                                            <span className="w-2 h-2 rounded-full bg-amber-400"></span> For Services
                                         </p>
                                         <p className="text-xl font-bold text-amber-400 leading-tight">{data.eventName}</p>
                                     </div>
@@ -127,27 +138,39 @@ export function ModernTemplate({ data, id = "print-content" }: ModernTemplatePro
                             </div>
 
 
-                            <div>
-                                <h4 className="flex items-center gap-3 text-[10px] font-black text-stone-400 uppercase tracking-widest mb-4">
-                                    Bank Details <span className="h-px bg-stone-200 flex-1"></span>
-                                </h4>
-                                <div className="grid grid-cols-2 gap-4 text-xs font-medium">
-                                    <div className="bg-stone-50 p-4 rounded-xl border border-stone-200">
-                                        <p className="text-stone-400 mb-1">Bank Name</p>
-                                        <p className="text-stone-900 font-bold">HDFC Bank, Saraswathipuram</p>
-                                    </div>
+                            {data.bankDetails && (data.bankDetails.bankName || data.bankDetails.accountName || data.bankDetails.accountNumber || data.bankDetails.ifscCode || data.bankDetails.branchName) && (
+                                <div>
+                                    <h4 className="flex items-center gap-3 text-[10px] font-black text-stone-400 uppercase tracking-widest mb-4">
+                                        Bank Details <span className="h-px bg-stone-200 flex-1"></span>
+                                    </h4>
+                                    <div className="grid grid-cols-2 gap-4 text-xs font-medium">
+                                        {(data.bankDetails.bankName || data.bankDetails.branchName) && (
+                                            <div className="bg-stone-50 p-4 rounded-xl border border-stone-200">
+                                                <p className="text-stone-400 mb-1">Bank Name & Branch</p>
+                                                <p className="text-stone-900 font-bold">
+                                                    {data.bankDetails.bankName && `${data.bankDetails.bankName}${data.bankDetails.branchName ? ', ' : ''}`}
+                                                    {data.bankDetails.branchName}
+                                                </p>
+                                            </div>
+                                        )}
 
-                                    <div className="bg-stone-50 p-4 rounded-xl border border-stone-200">
-                                        <p className="text-stone-400 mb-1">Account Info</p>
-                                        <p className="text-stone-900 font-bold tracking-tight">K M Enterprises</p>
-                                        <p className="text-stone-600 font-mono tracking-wider mt-1 border-t border-stone-200 pt-1">50200064343340</p>
-                                    </div>
-                                    <div className="col-span-2 bg-stone-50/50 p-3 rounded-xl border border-stone-200 flex justify-between items-center">
-                                        <span className="text-stone-400">IFSC Code</span>
-                                        <span className="text-stone-900 font-mono font-bold tracking-wider">HDFC0000065</span>
+                                        {(data.bankDetails.accountName || data.bankDetails.accountNumber) && (
+                                            <div className="bg-stone-50 p-4 rounded-xl border border-stone-200">
+                                                <p className="text-stone-400 mb-1">Account Info</p>
+                                                {data.bankDetails.accountName && <p className="text-stone-900 font-bold tracking-tight">{data.bankDetails.accountName}</p>}
+                                                {data.bankDetails.accountNumber && <p className="text-stone-600 font-mono tracking-wider mt-1 border-t border-stone-200 pt-1">{data.bankDetails.accountNumber}</p>}
+                                            </div>
+                                        )}
+                                        
+                                        {data.bankDetails.ifscCode && (
+                                            <div className="col-span-2 bg-stone-50/50 p-3 rounded-xl border border-stone-200 flex justify-between items-center">
+                                                <span className="text-stone-400">IFSC Code</span>
+                                                <span className="text-stone-900 font-mono font-bold tracking-wider">{data.bankDetails.ifscCode}</span>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
-                            </div>
+                            )}
                         </div>
 
                         {/* Grand Totals */}

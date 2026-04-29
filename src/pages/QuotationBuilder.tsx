@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Upload } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import logoImg from "@/assets/KM_Logo_Grey.png";
@@ -54,10 +55,24 @@ export default function QuotationBuilder() {
   const [clients, setClients] = useState<ClientOption[]>([]);
   const [events, setEvents] = useState<EventOption[]>([]);
   const [quotationNumber, setQuotationNumber] = useState("");
-  const [createdAt, setCreatedAt] = useState("");
+  const [createdAt, setCreatedAt] = useState(() => new Date().toISOString().split('T')[0]);
   const [showPrintPreview, setShowPrintPreview] = useState(false);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<"formal" | "creative" | "modern">("formal");
+
+  // Branding & Bank Details
+  const [logoDataUrl, setLogoDataUrl] = useState<string | null>(() => localStorage.getItem("quote_logo_url") || null);
+  const [companyName, setCompanyName] = useState(() => localStorage.getItem("quote_company_name") || "");
+  const [companyAddress, setCompanyAddress] = useState(() => localStorage.getItem("quote_company_address") || "");
+  const [companyGstin, setCompanyGstin] = useState(() => localStorage.getItem("quote_company_gstin") || "");
+  const [bankName, setBankName] = useState(() => localStorage.getItem("quote_bank_name") || "");
+  const [accountName, setAccountName] = useState(() => localStorage.getItem("quote_account_name") || "");
+  const [accountNumber, setAccountNumber] = useState(() => localStorage.getItem("quote_account_number") || "");
+  const [ifscCode, setIfscCode] = useState(() => localStorage.getItem("quote_ifsc_code") || "");
+  const [branchName, setBranchName] = useState(() => localStorage.getItem("quote_branch_name") || "");
+  const [logoAlignment, setLogoAlignment] = useState<'left'|'center'|'right'>(() => (localStorage.getItem("quote_logo_align") as any) || "left");
+  const [companyAlignment, setCompanyAlignment] = useState<'left'|'center'|'right'>(() => (localStorage.getItem("quote_company_align") as any) || "right");
+  const [logoSize, setLogoSize] = useState(() => Number(localStorage.getItem("quote_logo_size")) || 100);
 
   const subtotal = items.reduce((s, i) => s + i.amount, 0);
   const cgstAmount = (subtotal - discount) * (cgstPercentage / 100);
@@ -67,9 +82,32 @@ export default function QuotationBuilder() {
   const total = subtotal - discount + totalGstAmount;
 
   useEffect(() => {
+    localStorage.setItem("quote_company_name", companyName);
+    localStorage.setItem("quote_company_address", companyAddress);
+    localStorage.setItem("quote_company_gstin", companyGstin);
+    localStorage.setItem("quote_bank_name", bankName);
+    localStorage.setItem("quote_account_name", accountName);
+    localStorage.setItem("quote_account_number", accountNumber);
+    localStorage.setItem("quote_ifsc_code", ifscCode);
+    localStorage.setItem("quote_branch_name", branchName);
+    localStorage.setItem("quote_logo_align", logoAlignment);
+    localStorage.setItem("quote_company_align", companyAlignment);
+    localStorage.setItem("quote_logo_size", logoSize.toString());
+  }, [companyName, companyAddress, companyGstin, bankName, accountName, accountNumber, ifscCode, branchName, logoAlignment, companyAlignment, logoSize]);
+
+  useEffect(() => {
     if (!user) return;
     supabase.from("clients").select("id, name").then(({ data }) => setClients(data || []));
     supabase.from("events").select("id, name").then(({ data }) => setEvents(data || []));
+
+    if (!isEdit) {
+      if (!quotationNumber) {
+        supabase.from("quotations").select("id", { count: "exact", head: true }).then(({ count }) => {
+          const autoNum = `QT-${new Date().getFullYear()}-${String((count || 0) + 1).padStart(4, "0")}`;
+          setQuotationNumber(autoNum);
+        });
+      }
+    }
 
     if (isEdit) {
       supabase.from("quotations").select("*").eq("id", id).single().then(({ data }) => {
@@ -102,6 +140,28 @@ export default function QuotationBuilder() {
 
   const addItem = () => setItems([...items, { description: "", quantity: 1, unit: "nos", rate: 0, amount: 0 }]);
   const removeItem = (index: number) => setItems(items.filter((_, i) => i !== index));
+
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        toast({ title: "File too large", description: "Logo should be under 2MB", variant: "destructive" });
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const base64 = event.target?.result as string;
+        setLogoDataUrl(base64);
+        localStorage.setItem("quote_logo_url", base64);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const clearLogo = () => {
+    setLogoDataUrl(null);
+    localStorage.removeItem("quote_logo_url");
+  };
 
   const handleOpenPreview = () => {
     if (!quotationNumber || items.length === 0 || !title) {
@@ -139,9 +199,10 @@ export default function QuotationBuilder() {
         });
         
         const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = pdf.internal.pageSize.getHeight();
+        const imgProps = pdf.getImageProperties(imgData);
+        const imgHeight = (imgProps.height * pdfWidth) / imgProps.width;
         
-        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, imgHeight);
         const filename = `Quotation_${quotationNumber}.pdf`;
 
         if (action === 'share') {
@@ -246,17 +307,23 @@ export default function QuotationBuilder() {
       total,
       notes,
       terms,
+      created_at: createdAt ? new Date(createdAt).toISOString() : undefined,
     };
 
     let quotationId = id;
 
+    let finalQuotationNumber = quotationNumber.trim();
+    if (!finalQuotationNumber) {
+      const { count } = await supabase.from("quotations").select("id", { count: "exact", head: true });
+      finalQuotationNumber = `QT-${new Date().getFullYear()}-${String((count || 0) + 1).padStart(4, "0")}`;
+    }
+
     if (isEdit) {
-      await supabase.from("quotations").update(quotationData).eq("id", id);
+      const updatePayload = { ...quotationData, quotation_number: finalQuotationNumber };
+      await supabase.from("quotations").update(updatePayload).eq("id", id);
       await supabase.from("quotation_items").delete().eq("quotation_id", id);
     } else {
-      const { count } = await supabase.from("quotations").select("id", { count: "exact", head: true });
-      const quotation_number = `QT-${new Date().getFullYear()}-${String((count || 0) + 1).padStart(4, "0")}`;
-      const { data, error } = await supabase.from("quotations").insert({ ...quotationData, quotation_number, status: "new" }).select("id").single();
+      const { data, error } = await supabase.from("quotations").insert({ ...quotationData, quotation_number: finalQuotationNumber, status: "new" }).select("id").single();
       if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
       quotationId = data.id;
     }
@@ -280,8 +347,11 @@ export default function QuotationBuilder() {
     type: 'QUOTATION',
     documentNumber: quotationNumber || 'DRAFT',
     title: title,
-    date: createdAt || new Date().toISOString(),
+    date: createdAt ? new Date(createdAt).toISOString() : new Date().toISOString(),
     clientName: clientName,
+    logoAlignment: logoAlignment,
+    companyAlignment: companyAlignment,
+    logoSize: logoSize,
     eventName: eventName,
     items: items.map((i) => ({ ...i, id: i.id || crypto.randomUUID() })),
     subtotal,
@@ -295,7 +365,20 @@ export default function QuotationBuilder() {
     igstAmount,
     total,
     notes,
-    terms
+    terms,
+    logoDataUrl,
+    companyDetails: {
+      name: companyName,
+      address: companyAddress,
+      gstin: companyGstin
+    },
+    bankDetails: {
+      bankName,
+      accountName,
+      accountNumber,
+      ifscCode,
+      branchName
+    }
   };
 
   return (
@@ -418,7 +501,88 @@ export default function QuotationBuilder() {
             <div className="lg:col-span-2 space-y-4 sm:space-y-6">
               {/* Details Card */}
               <div className="glass-card rounded-xl p-4 sm:p-6">
-                <h3 className="font-serif font-semibold text-foreground mb-3 sm:mb-4 text-sm sm:text-base">Details</h3>
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
+                  <h3 className="font-serif font-semibold text-foreground text-sm sm:text-base">Company Info</h3>
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      <Label className="text-xs text-muted-foreground mr-1 whitespace-nowrap">Logo</Label>
+                      <div className="flex bg-secondary rounded-lg p-1">
+                        <button
+                          type="button"
+                          onClick={() => setLogoAlignment('left')}
+                          className={`px-2 py-1 text-xs rounded-md transition-colors ${logoAlignment === 'left' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                        >
+                          Left
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setLogoAlignment('center')}
+                          className={`px-2 py-1 text-xs rounded-md transition-colors ${logoAlignment === 'center' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                        >
+                          Center
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setLogoAlignment('right')}
+                          className={`px-2 py-1 text-xs rounded-md transition-colors ${logoAlignment === 'right' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                        >
+                          Right
+                        </button>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Label className="text-xs text-muted-foreground mr-1 whitespace-nowrap">Text</Label>
+                      <div className="flex bg-secondary rounded-lg p-1">
+                        <button
+                          type="button"
+                          onClick={() => setCompanyAlignment('left')}
+                          className={`px-2 py-1 text-xs rounded-md transition-colors ${companyAlignment === 'left' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                        >
+                          Left
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setCompanyAlignment('center')}
+                          className={`px-2 py-1 text-xs rounded-md transition-colors ${companyAlignment === 'center' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                        >
+                          Center
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setCompanyAlignment('right')}
+                          className={`px-2 py-1 text-xs rounded-md transition-colors ${companyAlignment === 'right' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                        >
+                          Right
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex justify-between items-center mb-3 sm:mb-4">
+                  <h3 className="font-serif font-semibold text-foreground text-sm sm:text-base">Details</h3>
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      <Label htmlFor="quoteDate" className="text-muted-foreground text-xs whitespace-nowrap">Date</Label>
+                      <Input
+                        id="quoteDate"
+                        type="date"
+                        value={createdAt ? createdAt.split('T')[0] : ""}
+                        onChange={(e) => setCreatedAt(e.target.value)}
+                        className="bg-secondary border-border h-8 w-36 text-xs"
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Label htmlFor="quotationNumber" className="text-muted-foreground text-xs whitespace-nowrap">Quote No.</Label>
+                      <Input
+                        id="quotationNumber"
+                        value={quotationNumber}
+                        onChange={(e) => setQuotationNumber(e.target.value)}
+                        className="bg-secondary border-border h-8 w-32 text-xs font-mono"
+                        placeholder="Auto"
+                      />
+                    </div>
+                  </div>
+                </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   <div className="sm:col-span-2">
                     <Label htmlFor="title" className="text-muted-foreground text-sm">Title</Label>
@@ -442,7 +606,7 @@ export default function QuotationBuilder() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="event" className="text-muted-foreground text-sm">Event Name</Label>
+                    <Label htmlFor="event" className="text-muted-foreground text-sm">Services</Label>
                     <Input
                       id="event"
                       value={eventName}
@@ -605,6 +769,136 @@ export default function QuotationBuilder() {
                   >
                     <Plus className="h-4 w-4 mr-2" />Add Another Item
                   </Button>
+                </div>
+              </div>
+
+              {/* Branding & Bank Details Card */}
+              <div className="glass-card rounded-xl p-4 sm:p-6">
+                <h3 className="font-serif font-semibold text-foreground mb-3 sm:mb-4 text-sm sm:text-base">Branding &amp; Payment Details</h3>
+                
+                <div className="mb-6">
+                  <Label className="text-muted-foreground text-sm mb-2 block">Company Logo</Label>
+                  <div className="flex items-center gap-4">
+                    {logoDataUrl ? (
+                      <div className="relative">
+                        <img src={logoDataUrl} alt="Logo preview" className="h-20 w-auto rounded object-contain bg-white p-2 border border-border" />
+                        <button
+                          onClick={clearLogo}
+                          className="absolute -top-2 -right-2 bg-destructive/90 text-white rounded-full p-1 hover:bg-destructive shadow-md"
+                          title="Remove Logo"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="h-20 w-32 border-2 border-dashed border-border rounded flex flex-col items-center justify-center text-muted-foreground bg-secondary/30">
+                        <Upload className="h-5 w-5 mb-1 opacity-50" />
+                        <span className="text-[10px]">No logo uploaded</span>
+                      </div>
+                    )}
+                    <div className="flex-1">
+                      <Input
+                        type="file"
+                        accept="image/png, image/jpeg, image/jpg"
+                        onChange={handleLogoUpload}
+                        className="text-xs file:bg-primary/10 file:text-primary file:border-0 file:rounded-md file:px-3 file:py-1 file:mr-3 file:text-xs file:font-medium hover:file:bg-primary/20 w-full"
+                      />
+                      <p className="text-[10px] text-muted-foreground mt-1 ml-1">PNG, JPG up to 2MB.</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border-t border-border/50 pt-5 mb-6">
+                  <Label className="text-muted-foreground text-sm mb-3 block">Company Info</Label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                    <div className="sm:col-span-2 md:col-span-1">
+                      <Label htmlFor="companyName" className="text-xs text-muted-foreground">Company Name</Label>
+                      <Input
+                        id="companyName"
+                        value={companyName}
+                        onChange={(e) => setCompanyName(e.target.value)}
+                        className="mt-1 bg-secondary border-border h-10"
+                        placeholder="e.g. K M Enterprises"
+                      />
+                    </div>
+                    <div className="sm:col-span-2 md:col-span-1">
+                      <Label htmlFor="companyGstin" className="text-xs text-muted-foreground">GSTIN</Label>
+                      <Input
+                        id="companyGstin"
+                        value={companyGstin}
+                        onChange={(e) => setCompanyGstin(e.target.value)}
+                        className="mt-1 bg-secondary border-border h-10"
+                        placeholder="e.g. 29AAXFK3522C1Z6"
+                      />
+                    </div>
+                    <div className="sm:col-span-2 text-xs">
+                      <Label htmlFor="companyAddress" className="text-muted-foreground">Address</Label>
+                      <Textarea
+                        id="companyAddress"
+                        value={companyAddress}
+                        onChange={(e) => setCompanyAddress(e.target.value)}
+                        className="mt-1 bg-secondary border-border min-h-[60px]"
+                        rows={2}
+                        placeholder="e.g. #612, Nagendra Nilaya, 8th Main 1st Stage..."
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border-t border-border/50 pt-5">
+                  <Label className="text-muted-foreground text-sm mb-3 block">Bank Account Details (Printed on Invoice)</Label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                    <div className="sm:col-span-2 md:col-span-1">
+                      <Label htmlFor="bankName" className="text-xs text-muted-foreground">Bank Name</Label>
+                      <Input
+                        id="bankName"
+                        value={bankName}
+                        onChange={(e) => setBankName(e.target.value)}
+                        className="mt-1 bg-secondary border-border h-10"
+                        placeholder="e.g. HDFC Bank"
+                      />
+                    </div>
+                    <div className="sm:col-span-2 md:col-span-1">
+                      <Label htmlFor="branchName" className="text-xs text-muted-foreground">Branch</Label>
+                      <Input
+                        id="branchName"
+                        value={branchName}
+                        onChange={(e) => setBranchName(e.target.value)}
+                        className="mt-1 bg-secondary border-border h-10"
+                        placeholder="e.g. Saraswathipuram"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="accountName" className="text-xs text-muted-foreground">Account Name</Label>
+                      <Input
+                        id="accountName"
+                        value={accountName}
+                        onChange={(e) => setAccountName(e.target.value)}
+                        className="mt-1 bg-secondary border-border h-10"
+                        placeholder="e.g. K M Enterprises"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="accountNumber" className="text-xs text-muted-foreground">Account Number</Label>
+                      <Input
+                        id="accountNumber"
+                        value={accountNumber}
+                        onChange={(e) => setAccountNumber(e.target.value)}
+                        className="mt-1 bg-secondary border-border h-10"
+                        placeholder="e.g. 50200000000000"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="ifscCode" className="text-xs text-muted-foreground">IFSC Code</Label>
+                      <Input
+                        id="ifscCode"
+                        value={ifscCode}
+                        onChange={(e) => setIfscCode(e.target.value)}
+                        className="mt-1 bg-secondary border-border h-10"
+                        placeholder="e.g. HDFC0000000"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
 

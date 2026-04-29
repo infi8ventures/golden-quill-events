@@ -6,11 +6,8 @@ import { VitePWA } from "vite-plugin-pwa";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, process.cwd(), '');
-  const base = (env.GITHUB_ACTIONS === 'true' || env.VITE_BASE_PATH) ? (env.VITE_BASE_PATH || "/golden-quill-events/") : "/";
-
   return {
-    base,
+    base: "", // Use relative paths for assets
     server: {
       host: "::",
       port: 8080,
@@ -32,8 +29,8 @@ export default defineConfig(({ mode }) => {
           background_color: "#0a0a0a",
           display: "standalone",
           orientation: "portrait-primary",
-          scope: base,
-          start_url: base,
+          scope: "./",
+          start_url: "./",
           icons: [
             {
               src: "icon.ico",
